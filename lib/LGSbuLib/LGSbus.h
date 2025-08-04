@@ -1,8 +1,8 @@
 
  /*
- *  LGSbus.h
- *  
- *  Created on: 29 Nov 2024
+ *  LGSbus.h 
+ *  This library is used for communication between Arduino Opta and other devices using RS485 protocol.
+ * 
  *  Author: M.Teerachot
  *  Tested with Arduino Opta
  */

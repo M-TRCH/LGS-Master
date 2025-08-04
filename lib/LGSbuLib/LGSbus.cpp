@@ -56,7 +56,7 @@ int LGSbus::send(int id, int type, int len, int addr, int timeout, int cnt_max)
   
     // 3. return
     unsigned long startTime = millis();
-    while(millis()-startTime < timeout) // timeout
+    while(millis()-startTime < (unsigned long)timeout) // timeout
     { 
       if (SR->find('&'))
       {
