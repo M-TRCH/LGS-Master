@@ -13,7 +13,6 @@
 #include "LGSbus.h"
 
 // (0) System config    
-#define NUM_MODULE 8
 #define RS485_BAUDRATE  9600
 #define RS485_TIMEOUT   50
 #define VERSION_DD      4

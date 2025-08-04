@@ -172,39 +172,45 @@ void Y_SW_Event()
 
 void run()
 {
-  // (1) get packet
+  // 1) Get packet from client.
   if (receivePacket())  
   {
     int ret = 0;
     
-    // (2) Take actions
+    // (2) Take action based on the command.
 #ifdef LGS_STANDARD
-    // Convert bin location to physical id.
+    // Invert bin location and convert to physical id.
     // from (1 to 8) ->  new (8 to 1)
-//    Serial.println("(" + String(9-ROW) + (", ") + String(COL) + ")");
-
+    // Serial.println("(" + String(9-ROW) + (", ") + String(COL) + ")");
     switch (CMD)
     {
-      case 0: // off
+      case 0:
+        //  Set color off. 
         ret = std_setColor(9-ROW, COL, CLR, false);
         if (ret)  returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_SECOND_SUCCEED, TRS[DEV], DEV);   
         else      returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_FAIL, TRS[DEV], DEV);   
         break;
       
-      case 1: // on 
+      case 1: 
+        //  Set color on.
         ret = std_setColor(9-ROW, COL, CLR);
         if (ret)  returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_SECOND_SUCCEED, TRS[DEV], DEV);   
         else      returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_FAIL, TRS[DEV], DEV);   
         break;
 
-      case 2: // request status
+      case 2:
+        //  Check if the device is idle or busy.
+        //  If idle, return PACK_IDLE.
+        //  If busy, return PACK_BUSY.
+        //  If error, return PACK_FAIL.  
         ret = std_requestStatus(9-ROW, COL, CLR);
              if (ret == 1)  returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_IDLE, TRS[DEV], DEV);  
         else if (ret == 2)  returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_BUSY, TRS[DEV], DEV);  
         else                returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_FAIL, TRS[DEV], DEV); 
         break;
 
-      case 9: // hardware reset
+      case 9:
+        //  Hardware reset.
         softwareReset();
         break;
     }
@@ -251,6 +257,7 @@ void setup()
 {
     // .1 System initialize
     Serial.begin(GENERAL_BAUD);
+    while(!Serial);
     pinMode(PWR_RELAY2_PIN, OUTPUT);
     pinMode(PWR_RELAY4_PIN, OUTPUT);
     PWR_RELAY2(HIGH);
@@ -265,30 +272,30 @@ void setup()
     server_init();
 #endif
 
-  // .3 Start up
-  delay(WAIT_MODULE_TIME);
-  setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);
-  Serial.println("Opta/status: started");
-  Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
+    // .3 Start up
+    delay(WAIT_MODULE_TIME);
+    setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);
+    Serial.println("Opta/status: started");
+    Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
 
-  // .4 Unlock development mode
-  unlockTimer = millis();
-  while (W_SW || R_SW || G_SW || B_SW || Y_SW)
-  {
-    delay(10);
-    if (millis()-unlockTimer >= unlockTimeout)
+    // .4 Unlock development mode
+    unlockTimer = millis();
+    while (W_SW || R_SW || G_SW || B_SW || Y_SW)
     {
-      devMode = true;
-      setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
-      setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
-      setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
-      setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
-      setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
-      setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
-      Serial.println("Opta/status: develop mode");
-      break;   
+        delay(10);
+        if (millis()-unlockTimer >= unlockTimeout)
+        {
+            devMode = true;
+            setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
+            setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
+            setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
+            setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
+            setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
+            setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
+            Serial.println("Opta/status: develop mode");
+            break;   
+        }
     }
-  }
   
   // .5 Test functions
 #ifdef TEST_FUNC
@@ -302,37 +309,38 @@ void setup()
   #endif
 #endif
  
-  while(0)
-  {
+    while(0)
+    {
 
-  }
+    }
 //  while(1);
 }
 
 void loop() 
 {
-  // .1 Test functions
-//  Serial.print(W_SW);
-//  Serial.print(R_SW);
-//  Serial.print(G_SW);
-//  Serial.print(B_SW);
-//  Serial.println(Y_SW);
+    // .1 Test functions
+    // Serial.print(W_SW);
+    // Serial.print(R_SW);
+    // Serial.print(G_SW);
+    // Serial.print(B_SW);
+    // Serial.println(Y_SW);
   
-  // .2 Ethernet
-  newClient_Event();
-  killClient_Event();
-
-  // .3 Run main function
-  run();
+    // .2 Ethernet
+    // newClient_Event();
+    // killClient_Event();
+    clientUpdate();
   
-  // .4 Development mode
-  if (devMode)
-  {
-    R_SW_Event();
-    G_SW_Event();
-    B_SW_Event();
-    Y_SW_Event();
-  }
-  W_SW_Event();
+    // .3 Run main function
+    run();
+   
+    // .4 Development mode
+    if (devMode)
+    {
+        R_SW_Event();
+        G_SW_Event();
+        B_SW_Event();
+        Y_SW_Event();
+    }
+    W_SW_Event();
 }
 
