@@ -20,7 +20,8 @@ extern IPAddress subnet;
 extern IPAddress gateway;
 extern IPAddress dns;
 extern EthernetServer server;
-extern EthernetClient clients[];
+extern EthernetClient client;
+extern bool ethernetInitialized;
 
 // (1) Packet status (follow M01 in documentation)
 #define PACK_FIRST_SUCCEED    1
@@ -34,18 +35,16 @@ extern EthernetClient clients[];
 // CBT: Cabinet, ROW: Row, COL: Column, QTY: Quantity, CLR: Color, CMD: Command, RET: Return status, TRS: Transition number, DEV: Device
 extern int CBT, ROW, COL, QTY, CLR, CMD, RET, DEV, SUM, SUM_CAL;
 extern int CBT_IN, ROW_IN, COL_IN, QTY_IN, CLR_IN, CMD_IN, RET_IN, TRS_IN, DEV_IN, SUM_IN, SUM_CAL_IN;
-
-// (3) Previous client connected and transition number   
 extern uint8_t TRS[]; // Stores the transition number of each device.
-extern int prevClientConnected;
 
-// (4) Function Prototypes
-extern void server_init();
+// (3) Function Prototypes
+void server_init();
 int stringToInt(String string, int digit);
 int digitLimiter(int num);
 int getNumConnectedClient();
 void newClient_Event();
 void killClient_Event();
+void clientUpdate();
 void returnPacket(int cbt, int row, int col, int qty, int clr, int cmd, int ret, int trs, int dev);
 int receivePacket();
 
