@@ -289,7 +289,7 @@ void setup()
   Serial.println("Opta/status: started");
   Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
 
-  // .4 Unlock development mode
+  // .4 Development mode
   devModeTimer = millis();
   while (W_SW || R_SW || G_SW || B_SW || Y_SW)
   {
@@ -320,11 +320,8 @@ void setup()
   #endif
 #endif
  
-    while(0)
-    {
-
-    }
-//  while(1);
+  // .6 Second start up 
+  setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
 }
 
 void loop() 
@@ -343,7 +340,20 @@ void loop()
 
   // .3 Run main function
   run();
+  if (cilentAlready && cilentAlreadyFirstCycle)
+  {
+    // If the client is connected, set the status to idle.
+    cilentAlreadyFirstCycle = false;
+    setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // red 
+  }
+  else if (!cilentAlready && !cilentAlreadyFirstCycle)
+  {
+    // If the client is not connected, set the status to busy.
+    cilentAlreadyFirstCycle = true;
+    setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+  }
   
+
   // .4 Development mode
   if (devModeActive)
   {

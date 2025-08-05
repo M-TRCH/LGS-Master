@@ -21,6 +21,8 @@ extern IPAddress dns;
 extern EthernetServer server;
 extern EthernetClient client;
 extern bool ethernetInitialized;
+extern bool cilentAlready;
+extern bool cilentAlreadyFirstCycle;
 
 // (1) Packet status (follow M01 in documentation)
 #define PACK_FIRST_SUCCEED    1

@@ -13,6 +13,8 @@ int CBT_IN = 0, ROW_IN = 0, COL_IN = 0, QTY_IN = 0, CLR_IN = 0, CMD_IN = 0, RET_
 
 uint8_t TRS[9999];  // Stores the transition number of each device.
 bool ethernetInitialized = false;
+bool cilentAlready = false;
+bool cilentAlreadyFirstCycle = true;
 
 void server_init()
 {
@@ -94,6 +96,8 @@ void clientUpdate()
   if (!client && newClient) 
   {
     client = newClient;
+    cilentAlready = true;
+    cilentAlreadyFirstCycle = true;
     Serial.println("Client: connected");
   }
   
@@ -101,6 +105,7 @@ void clientUpdate()
   if (client && !client.connected()) 
   {
     client.stop();
+    cilentAlready = false;
     Serial.println("Client: disconnected");
   }  
 }
