@@ -1,12 +1,11 @@
 
 #include "LGS_Ethernet.h"
 
-IPAddress ip(192, 168, 0, 59);
+IPAddress ip(192, 168, 0, 59);  // Set your desired static IP address
 IPAddress subnet(255, 255, 255, 0);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress dns(8, 8, 8, 8);
 EthernetServer server(2000);
-// EthernetClient clients[CLIENT_NUM + 1];
 EthernetClient client;
 
 int CBT = 0, ROW = 0, COL = 0, QTY = 0, CLR = 0, CMD = 0, RET = 0, DEV = 0, SUM = 0, SUM_CAL = 0;
