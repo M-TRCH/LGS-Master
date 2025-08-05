@@ -14,7 +14,6 @@
 #include <Ethernet.h>
 
 // (0) Ethernet module initialization
-#define CLIENT_NUM  2 // Old Ethernet module (W5100) supports up to 4 Clients.
 extern IPAddress ip;
 extern IPAddress subnet;
 extern IPAddress gateway;
@@ -41,9 +40,6 @@ extern uint8_t TRS[]; // Stores the transition number of each device.
 void server_init();
 int stringToInt(String string, int digit);
 int digitLimiter(int num);
-int getNumConnectedClient();
-void newClient_Event();
-void killClient_Event();
 void clientUpdate();
 void returnPacket(int cbt, int row, int col, int qty, int clr, int cmd, int ret, int trs, int dev);
 int receivePacket();

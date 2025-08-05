@@ -1,40 +1,47 @@
 
 #include <Arduino.h>
+#include <drivers/Watchdog.h>
 #include "LGS_Master.h"
 #include "LGS_Ethernet.h"
 
-/* (0) System */
-#define GENERAL_BAUD      115200
-#define PWR_RELAY2_PIN    D1
-#define PWR_RELAY4_PIN    D3
-#define PWR_RELAY2(s)     digitalWrite(PWR_RELAY2_PIN, s);
-#define PWR_RELAY4(s)     digitalWrite(PWR_RELAY4_PIN, s);
-#define WAIT_MODULE_TIME  5000
-// Development mode
-#define unlockTimeout     2000
-unsigned long unlockTimer = millis();
-bool devMode = false;
+// (0) System configuration 
+// .1 Pin configuration
+#define PWR_RELAY1_PIN        D0
+#define PWR_RELAY2_PIN        D1
+#define PWR_RELAY3_PIN        D2
+#define PWR_RELAY4_PIN        D3
+#define PWR_RELAY2(s)         digitalWrite(PWR_RELAY2_PIN, s);
+#define PWR_RELAY4(s)         digitalWrite(PWR_RELAY4_PIN, s);
+// .2 Constants
+#define SYSTEM_BAUD           9600
+#define WAIT_MODULE_STARTUP   5000
+#define DEV_MODE_TIMEOUT      2000
+#define WATCHDOG_TIMEOUT     10000
+// .3 Variables
+unsigned long devModeTimer = millis();
+bool devModeActive = false;
+unsigned long kickWatchdogTimer = millis();
 
-/* (1) Operate */
-//#define TEST_FUNC
+// (1) Operation configuration
+//#define TEST_FUNCTION
 #define LGS_STANDARD
 //#define LGS_NARCOTIC
 
-/* (2) Console */
+// (2) Console 
 #define W_SW  digitalRead(A0)
 #define R_SW  digitalRead(A1)
 #define G_SW  digitalRead(A2)
 #define B_SW  digitalRead(A3)
 #define Y_SW  digitalRead(A4)
 
-/* (3) Functions */
-void softwareReset()
+// (3) Functions
+void RESET_Event(unsigned long preResetTime = 3000, unsigned long postResetTime = 1000)
 {
   setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);
-  delay(3000);
+  delay(preResetTime);
   PWR_RELAY2(LOW);
   PWR_RELAY4(LOW);      
-  delay(1000);
+  delay(postResetTime);
   NVIC_SystemReset();
 }
 
@@ -45,7 +52,7 @@ void W_SW_Event()
     delay(50);
     if (W_SW)
     {
-      softwareReset();
+      RESET_Event();
     }
   }  
 }
@@ -211,7 +218,7 @@ void run()
 
       case 9:
         //  Hardware reset.
-        softwareReset();
+        RESET_Event();
         break;
     }
    
@@ -245,7 +252,7 @@ void run()
         break;
 
       case 9: // hardware reset
-        softwareReset();
+        RESET_Event();
         break;
     }
 #endif
@@ -255,50 +262,54 @@ void run()
 
 void setup() 
 {
-    // .1 System initialize
-    Serial.begin(GENERAL_BAUD);
-    while(!Serial);
-    pinMode(PWR_RELAY2_PIN, OUTPUT);
-    pinMode(PWR_RELAY4_PIN, OUTPUT);
-    PWR_RELAY2(HIGH);
-    PWR_RELAY4(HIGH);
+  // .1 System initialize
+  // Serial port
+  Serial.begin(SYSTEM_BAUD);
+  // while(!Serial);
+  // Pin configuration
+  pinMode(PWR_RELAY2_PIN, OUTPUT);
+  pinMode(PWR_RELAY4_PIN, OUTPUT);
+  PWR_RELAY2(HIGH);
+  PWR_RELAY4(HIGH);
+  // Enable watchdog timer
+  mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
 
-    // .2 Subsystem initialize
+  // .2 Subsystem initialize
 #ifdef LGS_MASTER_H
-    commu_init();
+  commu_init();
 #endif
 
 #ifdef LGS_ETHERNET_H
-    server_init();
+  server_init();
 #endif
 
-    // .3 Start up
-    delay(WAIT_MODULE_TIME);
-    setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);
-    Serial.println("Opta/status: started");
-    Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
+  // .3 Start up
+  delay(WAIT_MODULE_STARTUP);
+  setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);
+  Serial.println("Opta/status: started");
+  Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
 
-    // .4 Unlock development mode
-    unlockTimer = millis();
-    while (W_SW || R_SW || G_SW || B_SW || Y_SW)
-    {
-        delay(10);
-        if (millis()-unlockTimer >= unlockTimeout)
-        {
-            devMode = true;
-            setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
-            setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
-            setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
-            setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
-            setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
-            setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
-            Serial.println("Opta/status: develop mode");
-            break;   
-        }
-    }
+  // .4 Unlock development mode
+  devModeTimer = millis();
+  while (W_SW || R_SW || G_SW || B_SW || Y_SW)
+  {
+      delay(10);
+      if (millis()-devModeTimer >= DEV_MODE_TIMEOUT)
+      {
+          devModeActive = true;
+          setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
+          setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
+          setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
+          setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
+          setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
+          setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
+          Serial.println("Opta/status: develop mode");
+          break;   
+      }
+  }
   
   // .5 Test functions
-#ifdef TEST_FUNC
+#ifdef TEST_FUNCTION
   #ifdef LGS_STANDARD
     std_moduleCheck();
   #endif
@@ -318,29 +329,36 @@ void setup()
 
 void loop() 
 {
-    // .1 Test functions
-    // Serial.print(W_SW);
-    // Serial.print(R_SW);
-    // Serial.print(G_SW);
-    // Serial.print(B_SW);
-    // Serial.println(Y_SW);
+  // .1 Test functions
+  // Serial.print(W_SW);
+  // Serial.print(R_SW);
+  // Serial.print(G_SW);
+  // Serial.print(B_SW);
+  // Serial.println(Y_SW);
+
+  // .2 Ethernet
+  // newClient_Event();
+  // killClient_Event();
+  clientUpdate();
+
+  // .3 Run main function
+  run();
   
-    // .2 Ethernet
-    // newClient_Event();
-    // killClient_Event();
-    clientUpdate();
-  
-    // .3 Run main function
-    run();
-   
-    // .4 Development mode
-    if (devMode)
-    {
-        R_SW_Event();
-        G_SW_Event();
-        B_SW_Event();
-        Y_SW_Event();
-    }
-    W_SW_Event();
+  // .4 Development mode
+  if (devModeActive)
+  {
+    R_SW_Event();
+    G_SW_Event();
+    B_SW_Event();
+    Y_SW_Event();
+  }
+  W_SW_Event();
+
+  // .5 Reset watchdog timer
+  if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
+  {
+    kickWatchdogTimer = millis();
+    mbed::Watchdog::get_instance().kick();
+  }
 }
 
