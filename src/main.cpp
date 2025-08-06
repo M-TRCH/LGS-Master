@@ -275,9 +275,14 @@ void setup()
   // Pin configuration
   pinMode(PWR_RELAY2_PIN, OUTPUT);
   pinMode(PWR_RELAY4_PIN, OUTPUT);
+  pinMode(LED_D0, OUTPUT);
+  pinMode(LED_D1, OUTPUT);
+  pinMode(LED_D2, OUTPUT);
+  pinMode(LED_D3, OUTPUT);
   PWR_RELAY2(HIGH);
   PWR_RELAY4(HIGH);
-  
+  digitalWrite(LED_D0, HIGH);
+
   // .2 Subsystem initialize
 #ifdef LGS_MASTER_H
   commu_init();
