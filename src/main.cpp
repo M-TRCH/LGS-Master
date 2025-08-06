@@ -23,9 +23,9 @@ bool devModeActive = false;
 unsigned long kickWatchdogTimer = millis();
 
 // (1) Operation configuration
-//#define TEST_FUNCTION
+// #define TEST_FUNCTION
 #define LGS_STANDARD
-//#define LGS_NARCOTIC
+// #define LGS_NARCOTIC
 
 // (2) Console 
 #define W_SW  digitalRead(A0)
@@ -177,11 +177,15 @@ void Y_SW_Event()
   }
 }
 
-void run()
+bool run()
 {
+  // 0) initialize variables
+  bool getPacket = false;
+
   // 1) Get packet from client.
   if (receivePacket())  
   {
+    getPacket = true;
     int ret = 0;
     
     // (2) Take action based on the command.
@@ -258,6 +262,7 @@ void run()
 #endif
   
   }
+  return getPacket;
 }
 
 void setup() 
@@ -352,8 +357,7 @@ void loop()
   }
   // .4 Run main function
   else
-  {
-    run();
+  {    
     if (cilentAlready && cilentAlreadyFirstCycle)
     {
       // If the client is connected, set the status to idle.
@@ -365,6 +369,14 @@ void loop()
       // If the client is not connected, set the status to busy.
       cilentAlreadyFirstCycle = true;
       setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+    }
+    if (run())  
+    {
+      // If the packet is received, set the status to idle.
+      client.stop();
+      cilentAlready = false;
+      cilentAlreadyFirstCycle = false;
+      Serial.println("Client: force stop");
     }
   }
     

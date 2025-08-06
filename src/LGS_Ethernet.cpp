@@ -1,7 +1,7 @@
 
 #include "LGS_Ethernet.h"
 
-IPAddress ip(192, 168, 0, 14);  // Set your desired static IP address
+IPAddress ip(192, 168, 0, 21);  // Set your desired static IP address
 IPAddress subnet(255, 255, 255, 0);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress dns(8, 8, 8, 8);
@@ -17,7 +17,7 @@ bool cilentAlready = false;
 bool cilentAlreadyFirstCycle = true;
 
 void server_init()
-{
+{ 
   ethernetInitialized = Ethernet.begin(ip, dns, gateway, subnet);
   if (ethernetInitialized)
   {
