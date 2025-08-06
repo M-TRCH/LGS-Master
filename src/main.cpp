@@ -16,7 +16,7 @@
 #define SYSTEM_BAUD           9600
 #define WAIT_MODULE_STARTUP   5000
 #define DEV_MODE_TIMEOUT      2000
-#define WATCHDOG_TIMEOUT     10000
+#define WATCHDOG_TIMEOUT      30000  // 30 sec
 // .3 Variables
 unsigned long devModeTimer = millis();
 bool devModeActive = false;
@@ -56,7 +56,7 @@ void W_SW_Event()
     }
   }  
 }
-
+ 
 void R_SW_Event()
 {
   if (R_SW) 
@@ -266,14 +266,13 @@ void setup()
   // Serial port
   Serial.begin(SYSTEM_BAUD);
   // while(!Serial);
+  Serial.println("Opta/status: starting");
   // Pin configuration
   pinMode(PWR_RELAY2_PIN, OUTPUT);
   pinMode(PWR_RELAY4_PIN, OUTPUT);
   PWR_RELAY2(HIGH);
   PWR_RELAY4(HIGH);
-  // Enable watchdog timer
-  mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
-
+  
   // .2 Subsystem initialize
 #ifdef LGS_MASTER_H
   commu_init();
@@ -321,7 +320,12 @@ void setup()
 #endif
  
   // .6 Second start up 
-  setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+  if (!devModeActive) 
+  {
+    setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+    // Enable watchdog timer
+    mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
+  }
 }
 
 void loop() 
@@ -338,23 +342,7 @@ void loop()
   // killClient_Event();
   clientUpdate();
 
-  // .3 Run main function
-  run();
-  if (cilentAlready && cilentAlreadyFirstCycle)
-  {
-    // If the client is connected, set the status to idle.
-    cilentAlreadyFirstCycle = false;
-    setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // red 
-  }
-  else if (!cilentAlready && !cilentAlreadyFirstCycle)
-  {
-    // If the client is not connected, set the status to busy.
-    cilentAlreadyFirstCycle = true;
-    setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
-  }
-  
-
-  // .4 Development mode
+  // .3 Development mode
   if (devModeActive)
   {
     R_SW_Event();
@@ -362,13 +350,32 @@ void loop()
     B_SW_Event();
     Y_SW_Event();
   }
-  W_SW_Event();
-
+  // .4 Run main function
+  else
+  {
+    run();
+    if (cilentAlready && cilentAlreadyFirstCycle)
+    {
+      // If the client is connected, set the status to idle.
+      cilentAlreadyFirstCycle = false;
+      setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // red 
+    }
+    else if (!cilentAlready && !cilentAlreadyFirstCycle)
+    {
+      // If the client is not connected, set the status to busy.
+      cilentAlreadyFirstCycle = true;
+      setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+    }
+  }
+    
   // .5 Reset watchdog timer
   if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
   {
     kickWatchdogTimer = millis();
     mbed::Watchdog::get_instance().kick();
   }
+
+  // .6 Reset switch
+  W_SW_Event();
 }
 
