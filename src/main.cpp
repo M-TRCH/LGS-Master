@@ -37,7 +37,7 @@ unsigned long kickWatchdogTimer = millis();
 // (3) Functions
 void RESET_Event(unsigned long preResetTime = 3000, unsigned long postResetTime = 1000)
 {
-  setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);
+  setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY); // white
   delay(preResetTime);
   PWR_RELAY2(LOW);
   PWR_RELAY4(LOW);      
