@@ -1,7 +1,7 @@
 
 #include "LGS_Ethernet.h"
 
-IPAddress ip(192, 168, 0, 15);  // Set your desired static IP address
+IPAddress ip(192, 168, 0, 12);  // Set your desired static IP address
 IPAddress subnet(255, 255, 255, 0);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress dns(8, 8, 8, 8);
@@ -222,17 +222,18 @@ int receivePacket()
     }
 
     // 3) Received packet for debugging.     
-    // Serial.print("Cabinet:\t");     Serial.println(CBT_IN);
-    // Serial.print("Row:\t\t");       Serial.println(ROW_IN);
-    // Serial.print("Column:\t\t");    Serial.println(COL_IN); 
-    // Serial.print("Qty:\t\t");       Serial.println(QTY_IN);
-    // Serial.print("Color:\t\t");     Serial.println(CLR_IN);
-    // Serial.print("Command:\t");     Serial.println(CMD_IN);
-    // Serial.print("Return:\t\t");    Serial.println(RET_IN);
-    // Serial.print("Transit:\t");     Serial.println(TRS_IN);
-    // Serial.print("Device:\t\t");    Serial.println(DEV_IN);
-    // Serial.print("Sum:\t\t");       Serial.println(SUM_IN);
-    // Serial.print("Sum Cal:\t");     Serial.println(SUM_CAL_IN);
+    Serial.print("Cabinet:\t");     Serial.println(CBT_IN);
+    Serial.print("Row:\t\t");       Serial.println(ROW_IN);
+    Serial.print("Column:\t\t");    Serial.println(COL_IN); 
+    Serial.print("Qty:\t\t");       Serial.println(QTY_IN);
+    Serial.print("Color:\t\t");     Serial.println(CLR_IN);
+    Serial.print("Command:\t");     Serial.println(CMD_IN);
+    Serial.print("Return:\t\t");    Serial.println(RET_IN);
+    Serial.print("Transit:\t");     Serial.println(TRS_IN);
+    Serial.print("Device:\t\t");    Serial.println(DEV_IN);
+    Serial.print("Sum:\t\t");       Serial.println(SUM_IN);
+    Serial.print("Sum Cal:\t");     Serial.println(SUM_CAL_IN);
+    // Serial.println("Packet received: " + String(CBT_IN) + String(ROW_IN) + String(COL_IN) + String(QTY_IN) + String(CLR_IN) + String(CMD_IN) + String(RET_IN) + String(TRS_IN) + String(DEV_IN) + String(SUM_IN));
   }
   return ret;
 }

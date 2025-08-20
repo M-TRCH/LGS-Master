@@ -391,7 +391,6 @@ void loop()
             cilentAlreadyFirstCycle = false;
             Serial.println(clientInfo + " -> disconnected (timeout)");
         }
-
     }
     
     // .5 Reset watchdog timer
