@@ -1,7 +1,7 @@
 
 #include "LGS_Ethernet.h"
 
-IPAddress ip(192, 168, 0, 12);  // Set your desired static IP address
+IPAddress ip(192, 168, 0, 15);  // Set your desired static IP address
 IPAddress subnet(255, 255, 255, 0);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress dns(8, 8, 8, 8);
@@ -15,6 +15,8 @@ uint8_t TRS[9999];  // Stores the transition number of each device.
 bool ethernetInitialized = false;
 bool cilentAlready = false;
 bool cilentAlreadyFirstCycle = true;
+String clientInfo = "";
+uint32_t last_client_connected_time = 0;
 
 void server_init()
 { 
@@ -98,7 +100,9 @@ void clientUpdate()
     client = newClient;
     cilentAlready = true;
     cilentAlreadyFirstCycle = true;
-    Serial.println("Client: connected");
+    clientInfo = (client.remoteIP().toString() + ":" + (String)client.remotePort());
+    Serial.println(clientInfo + " -> connected");
+    last_client_connected_time = millis();
   }
   
   // 2) If the client is not connected, stop it.
@@ -106,7 +110,7 @@ void clientUpdate()
   {
     client.stop();
     cilentAlready = false;
-    Serial.println("Client: disconnected");
+    Serial.println(clientInfo + " -> disconnected");
   }  
 }
 

@@ -23,6 +23,8 @@ extern EthernetClient client;
 extern bool ethernetInitialized;
 extern bool cilentAlready;
 extern bool cilentAlreadyFirstCycle;
+extern String clientInfo;
+extern uint32_t last_client_connected_time;
 
 // (1) Packet status (follow M01 in documentation)
 #define PACK_FIRST_SUCCEED    1

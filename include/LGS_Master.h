@@ -15,7 +15,7 @@
 // (0) System config    
 #define RS485_BAUDRATE  9600
 #define RS485_TIMEOUT   50
-#define VERSION_DD      4
+#define VERSION_DD      20
 #define VERSION_MM      8
 #define VERSION_YY      25
 
