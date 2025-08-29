@@ -2,39 +2,12 @@
 #include "system.h"
 
 /*
-#include <drivers/Watchdog.h>
-#include "LGS_Master.h"
-#include "LGS_Ethernet.h"
-
-// (0) System configuration 
-// .1 Pin configuration
-#define PWR_RELAY1_PIN        D0
-#define PWR_RELAY2_PIN        D1
-#define PWR_RELAY3_PIN        D2
-#define PWR_RELAY4_PIN        D3
-#define PWR_RELAY2(s)         digitalWrite(PWR_RELAY2_PIN, s);
-#define PWR_RELAY4(s)         digitalWrite(PWR_RELAY4_PIN, s);
-// .2 Constants
-#define SYSTEM_BAUD           9600
-#define WAIT_MODULE_STARTUP   5000
 #define DEV_MODE_TIMEOUT      2000
 #define WATCHDOG_TIMEOUT      30000  // 30 sec
 // .3 Variables
 unsigned long devModeTimer = millis();
 bool devModeActive = false;
 unsigned long kickWatchdogTimer = millis();
-
-// (1) Operation configuration
-// #define TEST_FUNCTION
-#define LGS_STANDARD
-// #define LGS_NARCOTIC
-
-// (2) Console 
-#define W_SW  digitalRead(A0)
-#define R_SW  digitalRead(A1)
-#define G_SW  digitalRead(A2)
-#define B_SW  digitalRead(A3)
-#define Y_SW  digitalRead(A4)
 
 // (3) Functions
 void RESET_Event(unsigned long preResetTime = 3000, unsigned long postResetTime = 1000)
@@ -274,23 +247,6 @@ void setup()
         system_init();
     #endif
 
-
-    // // .1 System initialize
-    // // Serial port
-    // Serial.begin(SYSTEM_BAUD);
-    // // while(!Serial);
-    // Serial.println("Opta/status: starting");
-    // // Pin configuration
-    // pinMode(PWR_RELAY2_PIN, OUTPUT);
-    // pinMode(PWR_RELAY4_PIN, OUTPUT);
-    // pinMode(LED_D0, OUTPUT);
-    // pinMode(LED_D1, OUTPUT);
-    // pinMode(LED_D2, OUTPUT);
-    // pinMode(LED_D3, OUTPUT);
-    // PWR_RELAY2(HIGH);
-    // PWR_RELAY4(HIGH);
-    // digitalWrite(LED_D0, HIGH);
-
     // // .2 Subsystem initialize
     // #ifdef LGS_MASTER_H
     //     commu_init();
@@ -349,7 +305,7 @@ void setup()
 void loop() 
 {
     Serial.println("Hello, world!");
-    delay(1000);
+    delay(3000);
 
     // .1 Test functions
     // Serial.print(W_SW);

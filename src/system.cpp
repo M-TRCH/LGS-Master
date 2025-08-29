@@ -21,13 +21,20 @@ void system_init(void)
     // serial configuration
     Serial.begin(SERIAL_BAUD);
     Serial.setTimeout(SERIAL_TIMEOUT);
-    
-    Serial.print(F("Waiting for Serial"));
+
+    set_relay(true);
+    Serial.print(F("Waiting for Module Startup"));
     uint32_t startTime = millis();
-    while(!Serial && millis() - startTime < 2000)
+    while(millis() - startTime < MODULE_STARTUP_DELAY)
     {
         Serial.print(F("."));
         delay(200);
     }
     Serial.println(F("System Initialized"));  
+}
+
+void set_relay(bool state)
+{
+    digitalWrite(RELAY_2_PIN, state);
+    digitalWrite(RELAY_4_PIN, state);
 }
