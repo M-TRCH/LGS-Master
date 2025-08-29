@@ -1,5 +1,7 @@
 
-#include <Arduino.h>
+#include "system.h"
+
+/*
 #include <drivers/Watchdog.h>
 #include "LGS_Master.h"
 #include "LGS_Ethernet.h"
@@ -263,81 +265,92 @@ bool run()
     return getPacket;
 }
 
+*/
+
 void setup() 
 {
-    // .1 System initialize
-    // Serial port
-    Serial.begin(SYSTEM_BAUD);
-    // while(!Serial);
-    Serial.println("Opta/status: starting");
-    // Pin configuration
-    pinMode(PWR_RELAY2_PIN, OUTPUT);
-    pinMode(PWR_RELAY4_PIN, OUTPUT);
-    pinMode(LED_D0, OUTPUT);
-    pinMode(LED_D1, OUTPUT);
-    pinMode(LED_D2, OUTPUT);
-    pinMode(LED_D3, OUTPUT);
-    PWR_RELAY2(HIGH);
-    PWR_RELAY4(HIGH);
-    digitalWrite(LED_D0, HIGH);
-
-    // .2 Subsystem initialize
-    #ifdef LGS_MASTER_H
-        commu_init();
+    #ifdef SYSTEM_H
+        // Initialize system
+        system_init();
     #endif
 
-    #ifdef LGS_ETHERNET_H
-        server_init();
-    #endif
 
-    // .3 Start up
-    delay(WAIT_MODULE_STARTUP);
-    setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);
-    Serial.println("Opta/status: started");
-    Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
+    // // .1 System initialize
+    // // Serial port
+    // Serial.begin(SYSTEM_BAUD);
+    // // while(!Serial);
+    // Serial.println("Opta/status: starting");
+    // // Pin configuration
+    // pinMode(PWR_RELAY2_PIN, OUTPUT);
+    // pinMode(PWR_RELAY4_PIN, OUTPUT);
+    // pinMode(LED_D0, OUTPUT);
+    // pinMode(LED_D1, OUTPUT);
+    // pinMode(LED_D2, OUTPUT);
+    // pinMode(LED_D3, OUTPUT);
+    // PWR_RELAY2(HIGH);
+    // PWR_RELAY4(HIGH);
+    // digitalWrite(LED_D0, HIGH);
 
-    // .4 Development mode
-    devModeTimer = millis();
-    while (W_SW || R_SW || G_SW || B_SW || Y_SW)
-    {
-        delay(10);
-        if (millis()-devModeTimer >= DEV_MODE_TIMEOUT)
-        {
-            devModeActive = true;
-            setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
-            setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
-            setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
-            setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
-            setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
-            setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
-            Serial.println("Opta/status: develop mode");
-            break;   
-        }
-    }
+    // // .2 Subsystem initialize
+    // #ifdef LGS_MASTER_H
+    //     commu_init();
+    // #endif
+
+    // #ifdef LGS_ETHERNET_H
+    //     server_init();
+    // #endif
+
+    // // .3 Start up
+    // delay(WAIT_MODULE_STARTUP);
+    // setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);
+    // Serial.println("Opta/status: started");
+    // Serial.println("Code/version: " + String(VERSION_DD) + "/" + String(VERSION_MM) + "/" + String(VERSION_YY));
+
+    // // .4 Development mode
+    // devModeTimer = millis();
+    // while (W_SW || R_SW || G_SW || B_SW || Y_SW)
+    // {
+    //     delay(10);
+    //     if (millis()-devModeTimer >= DEV_MODE_TIMEOUT)
+    //     {
+    //         devModeActive = true;
+    //         setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
+    //         setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
+    //         setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
+    //         setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
+    //         setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
+    //         setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
+    //         Serial.println("Opta/status: develop mode");
+    //         break;   
+    //     }
+    // }
   
-    // .5 Test functions
-    #ifdef TEST_FUNCTION
-        #ifdef LGS_STANDARD
-            std_moduleCheck();
-        #endif
+    // // .5 Test functions
+    // #ifdef TEST_FUNCTION
+    //     #ifdef LGS_STANDARD
+    //         std_moduleCheck();
+    //     #endif
 
-        #ifdef LGS_NARCOTIC
-            // nct_moduleCheck();
-            nct_allUnlock();
-        #endif
-    #endif
+    //     #ifdef LGS_NARCOTIC
+    //         // nct_moduleCheck();
+    //         nct_allUnlock();
+    //     #endif
+    // #endif
  
-    // .6 Second start up 
-    if (!devModeActive) 
-    {
-        setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
-        // Enable watchdog timer
-        mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
-    }
+    // // .6 Second start up 
+    // if (!devModeActive) 
+    // {
+    //     setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+    //     // Enable watchdog timer
+    //     mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
+    // }
 }
 
 void loop() 
 {
+    Serial.println("Hello, world!");
+    delay(1000);
+
     // .1 Test functions
     // Serial.print(W_SW);
     // Serial.print(R_SW);
@@ -346,61 +359,61 @@ void loop()
     // Serial.println(Y_SW);
 
     // .2 Ethernet
-    clientUpdate();
+    // clientUpdate();
 
     // .3 Development mode
-    if (devModeActive)
-    {
-        R_SW_Event();
-        G_SW_Event();
-        B_SW_Event();
-        Y_SW_Event();
-    }
+    // if (devModeActive)
+    // {
+    //     R_SW_Event();
+    //     G_SW_Event();
+    //     B_SW_Event();
+    //     Y_SW_Event();
+    // }
   
     // .4 Run main function
-    else
-    {    
-        // If the client is connected, set the status to idle.
-        if (cilentAlready && cilentAlreadyFirstCycle)
-        {
-            cilentAlreadyFirstCycle = false;
-            setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // red 
-        }
+    // else
+    // {    
+    //     // If the client is connected, set the status to idle.
+    //     if (cilentAlready && cilentAlreadyFirstCycle)
+    //     {
+    //         cilentAlreadyFirstCycle = false;
+    //         setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // red 
+    //     }
 
-        // If the client is not connected, set the status to busy.
-        else if (!cilentAlready && !cilentAlreadyFirstCycle)
-        {
-            cilentAlreadyFirstCycle = true;
-            setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
-        }
+    //     // If the client is not connected, set the status to busy.
+    //     else if (!cilentAlready && !cilentAlreadyFirstCycle)
+    //     {
+    //         cilentAlreadyFirstCycle = true;
+    //         setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
+    //     }
 
-        // If the packet is received, forced stop the client.
-        if (run())  
-        {
-            client.stop();
-            cilentAlready = false;
-            cilentAlreadyFirstCycle = false;
-            Serial.println(clientInfo + " -> disconnected (force)");
-        }
+    //     // If the packet is received, forced stop the client.
+    //     if (run())  
+    //     {
+    //         client.stop();
+    //         cilentAlready = false;
+    //         cilentAlreadyFirstCycle = false;
+    //         Serial.println(clientInfo + " -> disconnected (force)");
+    //     }
 
-        // If the client is connected for too long, force stop the client.
-        if (millis() - last_client_connected_time >= 3000 && cilentAlready)
-        {
-            client.stop();
-            cilentAlready = false;
-            cilentAlreadyFirstCycle = false;
-            Serial.println(clientInfo + " -> disconnected (timeout)");
-        }
-    }
+    //     // If the client is connected for too long, force stop the client.
+    //     if (millis() - last_client_connected_time >= 3000 && cilentAlready)
+    //     {
+    //         client.stop();
+    //         cilentAlready = false;
+    //         cilentAlreadyFirstCycle = false;
+    //         Serial.println(clientInfo + " -> disconnected (timeout)");
+    //     }
+    // }
     
-    // .5 Reset watchdog timer
-    if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
-    {
-        kickWatchdogTimer = millis();
-        mbed::Watchdog::get_instance().kick();
-    }
+    // // .5 Reset watchdog timer
+    // if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
+    // {
+    //     kickWatchdogTimer = millis();
+    //     mbed::Watchdog::get_instance().kick();
+    // }
 
-    // .6 Reset switch
-    W_SW_Event();
+    // // .6 Reset switch
+    // W_SW_Event();
 }
 

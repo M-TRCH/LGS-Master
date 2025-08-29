@@ -22,7 +22,7 @@
 // (1) Define LGS protocol objects
 extern LGSbus bus;
 
-// (2) Refer to LGS8_COMMU.h
+// (2) Command Address (Refer to LGS8_COMMU.h)
 #define ADDR_GREET      0
 #define ADDR_CL_LED1    1
 #define ADDR_CL_LED2    2
