@@ -18,13 +18,24 @@
 #define LED_BUILTIN_2_PIN       LED_D2
 #define LED_BUILTIN_3_PIN       LED_D3
 
-// serial configuration
+// constants values
 #define SERIAL_BAUD             9600
 #define SERIAL_TIMEOUT          100
 #define RS485_BAUD              9600
 #define RS485_TIMEOUT           50
 #define MODULE_STARTUP_DELAY    5000
 
+enum DebugLevel
+{
+    DEBUG_NONE = 0,
+    DEBUG_BASIC,
+    DEBUG_VERBOSE
+};
+extern DebugLevel debugLevel;
+
+// Macro definitions
+#define PRINT(level, msg) \
+    do { if (debugLevel >= level) Serial.print(msg); } while(0)
 
 /* @brief Initialize system: pins and serial communication
  */
@@ -34,5 +45,13 @@ void system_init(void);
  * @param state: true to turn on, false to turn off
  */
 void set_relay(bool state=true);
+
+/*
+ * @brief Debounce switch input
+ * @param pin: pin number
+ * @param delayTime: debounce delay time in milliseconds
+ * @return true if switch is pressed, false otherwise
+ */
+extern bool debounce_sw(uint32_t pin, uint32_t debounceTime=50, uint32_t releaseTimeout=1000);
 
 #endif
