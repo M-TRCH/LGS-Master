@@ -209,21 +209,21 @@ bool run()
                     else        returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_FAIL, TRS[DEV], DEV);   
                     break;
 
-            case 2:
-                //  Check if the device is idle or busy.
-                //  If idle, return PACK_IDLE.
-                //  If busy, return PACK_BUSY.
-                //  If error, return PACK_FAIL.  
-                ret = std_requestStatus(9-ROW, COL, CLR);
-                if (ret == 1)       returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_IDLE, TRS[DEV], DEV);  
-                else if (ret == 2)  returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_BUSY, TRS[DEV], DEV);  
-                else                returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_FAIL, TRS[DEV], DEV); 
-                break;
+                case 2:
+                    //  Check if the device is idle or busy.
+                    //  If idle, return PACK_IDLE.
+                    //  If busy, return PACK_BUSY.
+                    //  If error, return PACK_FAIL.  
+                    ret = std_requestStatus(9-ROW, COL, CLR);
+                    if (ret == 1)       returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_IDLE, TRS[DEV], DEV);  
+                    else if (ret == 2)  returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_BUSY, TRS[DEV], DEV);  
+                    else                returnPacket(CBT, ROW, COL, QTY, CLR, CMD, PACK_FAIL, TRS[DEV], DEV); 
+                    break;
 
-            case 9:
-                //  Hardware reset.
-                RESET_Event();
-                break;
+                case 9:
+                    //  Hardware reset.
+                    RESET_Event();
+                    break;
             }
         #endif
 
