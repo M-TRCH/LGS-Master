@@ -295,45 +295,9 @@ void setup()
     // }
 }
 
-static bool isRaw = true;
-    
 void loop() 
 {
-    // Print switch states
-    if (isRaw)
-    {
-        Serial.print("W:");
-        Serial.print(digitalRead(W_SW_PIN));
-        Serial.print("\tR:");
-        Serial.print(digitalRead(R_SW_PIN));
-        Serial.print("\tG:");
-        Serial.print(digitalRead(G_SW_PIN));
-        Serial.print("\tB:");
-        Serial.print(digitalRead(B_SW_PIN));
-        Serial.print("\tY:");
-        Serial.print(digitalRead(Y_SW_PIN));
-        Serial.println();
-    }
-    else
-    {
-        Serial.print("W:");
-        Serial.print(debounce_sw(W_SW_PIN, 50, 1000));
-        Serial.print("\tR:");
-        Serial.print(debounce_sw(R_SW_PIN, 50, 1000));
-        Serial.print("\tG:");
-        Serial.print(debounce_sw(G_SW_PIN, 50, 1000));
-        Serial.print("\tB:");
-        Serial.print(debounce_sw(B_SW_PIN, 50, 1000));
-        Serial.print("\tY:");
-        Serial.print(debounce_sw(Y_SW_PIN, 50, 1000));
-        Serial.println();
-    }
-    
-
-    // static uint32_t cnt = 0;
-    // Serial.println("Hello, world!\t" + String(cnt++));
-    // delay(5000);
-
+    panel_switch_debug();  
     
     // .2 Ethernet
     // clientUpdate();

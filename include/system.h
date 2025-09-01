@@ -37,7 +37,7 @@ extern DebugLevel debugLevel;
 #define PRINT(level, msg) \
     do { if (debugLevel >= level) Serial.print(msg); } while(0)
 
-/* @brief Initialize system: pins and serial communication
+/* @brief Initialize system: pins, serial communication, and config
  */
 void system_init(void);
 
@@ -52,6 +52,10 @@ void set_relay(bool state=true);
  * @param delayTime: debounce delay time in milliseconds
  * @return true if switch is pressed, false otherwise
  */
-extern bool debounce_sw(uint32_t pin, uint32_t debounceTime=50, uint32_t releaseTimeout=1000);
+bool debounce_sw(uint32_t pin, uint32_t debounceTime=50, uint32_t releaseTimeout=1000);
+
+/* @brief Print switch states for debugging
+ */
+void panel_switch_debug();
 
 #endif

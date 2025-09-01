@@ -25,6 +25,7 @@ void system_init(void)
     Serial.setTimeout(SERIAL_TIMEOUT);
 
     set_relay(true);
+    
     PRINT(DEBUG_BASIC, F("Waiting for Module Startup\n"));
     uint32_t startupTime = millis();
     while(millis() - startupTime < MODULE_STARTUP_DELAY)
@@ -60,4 +61,19 @@ bool debounce_sw(uint32_t pin, uint32_t debounceTime, uint32_t releaseTimeout)
         }
     }
     return false;
+}
+
+void panel_switch_debug()
+{
+    Serial.print("W:");
+    Serial.print(digitalRead(W_SW_PIN));
+    Serial.print("\tR:");
+    Serial.print(digitalRead(R_SW_PIN));
+    Serial.print("\tG:");
+    Serial.print(digitalRead(G_SW_PIN));
+    Serial.print("\tB:");
+    Serial.print(digitalRead(B_SW_PIN));
+    Serial.print("\tY:");
+    Serial.print(digitalRead(Y_SW_PIN));
+    Serial.println();
 }
