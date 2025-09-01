@@ -33,7 +33,7 @@ enum DebugLevel
 };
 extern DebugLevel debugLevel;
 
-// Macro definitions
+// macro definitions
 #define PRINT(level, msg) \
     do { if (debugLevel >= level) Serial.print(msg); } while(0)
 
