@@ -1,6 +1,7 @@
 
 #include "system.h"
 #include "config.h"
+#include "ethernet_utils.h"
 
 /*
 #define DEV_MODE_TIMEOUT      2000
@@ -244,17 +245,16 @@ bool run()
 void setup() 
 {
     #ifdef SYSTEM_H
-        // Initialize system
         system_init();
     #endif
 
-    // ตัวอย่างการใช้งาน Device Info struct
-    // ตั้งค่า IP address เป็น 192.168.0.9
-    setIPAddress(&device_info, 192, 168, 0, 9);
-    
-    // ตั้งค่า firmware version เป็น 01/09/2025
-    setFirmwareVersion(&device_info, 1, 9, 2025);
+    #ifdef CONFIG_H
+        config_init();
+    #endif
 
+    #ifdef ETHERNET_UTILS_H
+        ethernet_init();
+    #endif
 
     // // .2 Subsystem initialize
     // #ifdef LGS_MASTER_H
@@ -308,12 +308,12 @@ void loop()
 {
     // panel_switch_debug();
     
-    PRINT(DEBUG_BASIC, F("IP Address: "));
-    PRINT(DEBUG_BASIC, ipToString(&device_info.ip_address));
-    PRINT(DEBUG_BASIC, F("\nFirmware Version: "));
-    PRINT(DEBUG_BASIC, firmwareVersionToString(&device_info.firmware_version));
-    PRINT(DEBUG_BASIC, F("\n"));
-    delay(1000);
+    // PRINT(DEBUG_BASIC, F("IP Address: "));
+    // PRINT(DEBUG_BASIC, ipToString(&device_info.ip_address));
+    // PRINT(DEBUG_BASIC, F("\nFirmware Version: "));
+    // PRINT(DEBUG_BASIC, firmwareVersionToString(&device_info.firmware_version));
+    // PRINT(DEBUG_BASIC, F("\n"));
+    // delay(1000);
 
     // .2 Ethernet
     // clientUpdate();

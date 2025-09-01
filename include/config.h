@@ -3,6 +3,11 @@
 #define CONFIG_H
 
 #include <Arduino.h>
+#include "system.h"
+
+/* @brief Initialize configuration settings
+*/
+void config_init();
 
 // Struct for storing IP address
 struct IPAddress_t 
@@ -58,5 +63,10 @@ String ipToString(const IPAddress_t* ip);
  * @param version Pointer to the FirmwareVersion_t structure
  */
 String firmwareVersionToString(const FirmwareVersion_t* version);
+
+/* @brief Print device information
+ * @param info Pointer to the DeviceInfo_t structure
+ */
+void printDeviceInfo(const DeviceInfo_t* info);
 
 #endif // CONFIG_H

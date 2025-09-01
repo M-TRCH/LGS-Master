@@ -1,7 +1,18 @@
+
 #include "config.h"
 
 // Global variable to store device information
 DeviceInfo_t device_info;
+
+void config_init()
+{
+    // Initialize default device information
+    setIPAddress(&device_info, 192, 168, 0, 99);
+    setFirmwareVersion(&device_info, 1, 9, 2025);
+
+    // Print device information
+    printDeviceInfo(&device_info);
+}
 
 void setIPAddress(DeviceInfo_t* info, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4) 
 {
@@ -33,3 +44,12 @@ String firmwareVersionToString(const FirmwareVersion_t* version)
     String month = (version->month < 10) ? "0" + String(version->month) : String(version->month);
     return day + "/" + month + "/" + String(version->year);
 }
+
+void printDeviceInfo(const DeviceInfo_t* info) 
+{
+    PRINT(DEBUG_VERBOSE, F("Firmware Version: "));
+    PRINT(DEBUG_VERBOSE, firmwareVersionToString(&info->firmware_version));
+    PRINT(DEBUG_VERBOSE, F("\n"));
+}
+
+
