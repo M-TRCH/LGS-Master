@@ -1,5 +1,8 @@
-
 #include "ethernet_utils.h"
+
+
+TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
+EthernetServer tcp_server(TCP_SERVER_PORT);  // Ethernet server on port 2000
 
 void ethernet_init()
 {
@@ -45,4 +48,53 @@ void ethernet_init()
         PRINT(DEBUG_VERBOSE, F("Ethernet cable connected successfully\n"));
     }
     PRINT(DEBUG_BASIC, F("Ethernet initialized\n"));
+}
+
+void tcp_server_init()
+{
+    // Start the TCP server
+    tcp_server.begin();
+    PRINT(DEBUG_BASIC, F("TCP server initialized on port "));
+    PRINT(DEBUG_BASIC, TCP_SERVER_PORT);
+    PRINT(DEBUG_BASIC, F("\n"));
+}
+
+void tcp_server_update()
+{
+    EthernetClient new_client = tcp_server.accept();
+
+    // Accept only one client at a time
+    if (!tcp_client.client && new_client) 
+    {
+        tcp_client.client = new_client;
+        tcp_client.connected = true;
+        tcp_client.info = "Client connected: " + new_client.remoteIP().toString() + ":" + String(new_client.remotePort());
+        PRINT(DEBUG_BASIC, tcp_client.info + F("\n"));
+        tcp_client.last_active_time = millis();
+    }
+
+    if (tcp_client.client) 
+    {
+        // If client is not connected, stop and reset
+        if (!tcp_client.client.connected()) 
+        {
+            tcp_client.client.stop();
+            tcp_client.connected = false;
+            tcp_client.info = "Client disconnected (lost connection)";
+            PRINT(DEBUG_BASIC, tcp_client.info + F("\n"));
+        }
+        // If client is connected but inactive for too long, disconnect
+        else if (millis() - tcp_client.last_active_time > CLIENT_TIMEOUT_MS) 
+        {
+            tcp_client.client.stop();
+            tcp_client.connected = false;
+            tcp_client.info = "Client disconnected (timeout)";
+            PRINT(DEBUG_BASIC, tcp_client.info + F("\n"));
+        }
+        // If client sent any data, reset timeout
+        else if (tcp_client.client.available()) 
+        {
+            tcp_client.last_active_time = millis();
+        }
+    }
 }

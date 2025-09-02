@@ -254,15 +254,12 @@ void setup()
 
     #ifdef ETHERNET_UTILS_H
         ethernet_init();
+        tcp_server_init();
     #endif
 
     // // .2 Subsystem initialize
     // #ifdef LGS_MASTER_H
     //     commu_init();
-    // #endif
-
-    // #ifdef LGS_ETHERNET_H
-    //     server_init();
     // #endif
 
     // // .4 Development mode
@@ -306,15 +303,13 @@ void setup()
 
 void loop() 
 {
+
+    #ifdef ETHERNET_UTILS_H    
+        tcp_server_update();
+    #endif
+
     // panel_switch_debug();
     
-    // PRINT(DEBUG_BASIC, F("IP Address: "));
-    // PRINT(DEBUG_BASIC, ipToString(&device_info.ip_address));
-    // PRINT(DEBUG_BASIC, F("\nFirmware Version: "));
-    // PRINT(DEBUG_BASIC, firmwareVersionToString(&device_info.firmware_version));
-    // PRINT(DEBUG_BASIC, F("\n"));
-    // delay(1000);
-
     // .2 Ethernet
     // clientUpdate();
 
