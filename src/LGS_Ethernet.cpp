@@ -10,8 +10,8 @@ EthernetClient client;
 
 int CBT = 0, ROW = 0, COL = 0, QTY = 0, CLR = 0, CMD = 0, RET = 0, DEV = 0, SUM = 0, SUM_CAL = 0;
 int CBT_IN = 0, ROW_IN = 0, COL_IN = 0, QTY_IN = 0, CLR_IN = 0, CMD_IN = 0, RET_IN = 0, TRS_IN = 0, DEV_IN = 0, SUM_IN = 0, SUM_CAL_IN = 0;
-
 uint8_t TRS[9999];  // Stores the transition number of each device.
+
 bool ethernetInitialized = false;
 bool cilentAlready = false;
 bool cilentAlreadyFirstCycle = true;

@@ -1,8 +1,9 @@
 #include "ethernet_utils.h"
 
-
+EthernetServer tcp_server(TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
-EthernetServer tcp_server(TCP_SERVER_PORT);  // Ethernet server on port 2000
+TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
+uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for each device
 
 void ethernet_init()
 {
@@ -97,4 +98,69 @@ void tcp_server_update()
             tcp_client.last_active_time = millis();
         }
     }
+}
+
+int receive_tcp_packet(TcpPacket &packet)
+{
+    // Check if the client is connected and has data to read.
+    if (!tcp_client.client|| !tcp_client.client.connected() || !tcp_client.client.available())
+        return 0;
+        
+    // Wait for header 'B'
+    if (!tcp_client.client.find('B'))
+        return 0;
+
+    // Parse and validate all fields
+    int fields[10];
+    for (int i = 0; i < 10; ++i) 
+    {
+        if (!tcp_client.client.available()) return 0; // Ensure data is available
+        fields[i] = tcp_client.client.parseInt();
+    }
+
+    // Assign to struct
+    packet.cabinet      = fields[0];
+    packet.row          = fields[1];
+    packet.column       = fields[2];
+    packet.quantity     = fields[3];
+    packet.color        = fields[4];
+    packet.command      = fields[5];
+    packet.ret_status   = fields[6];
+    packet.transition   = fields[7];
+    packet.device       = fields[8];
+    packet.sum          = fields[9];
+
+    // Check device index range to prevent overflow
+    if (packet.device < 0 || packet.device >= MAX_DEVICE) 
+    {
+        PRINT(DEBUG_BASIC, F("Error: Device index out of range\n"));
+        return 0;
+    }
+
+    // Validate sum and transition number (allow reply only if transition number changed)
+    int calc_sum = packet.cabinet + packet.row + packet.column + packet.quantity + packet.color +
+                   packet.command + packet.ret_status + packet.transition + packet.device;
+    calc_sum = calc_sum % 100;  // Sum is last two digits
+    if (packet.sum != calc_sum) 
+    {
+        PRINT(DEBUG_BASIC, F("Error: Packet sum mismatch\n"));
+        return 0;
+    }
+
+    if (packet.transition == transition_numbers[packet.device]) 
+    {
+        PRINT(DEBUG_BASIC, F("Error: Duplicate packet (same transition number)\n"));
+        return 0;
+    }
+
+    // Update transition number for this device
+    transition_numbers[packet.device] = packet.transition;
+
+    // Debug print
+    PRINT(DEBUG_VERBOSE, "Packet received: CAB=" + String(packet.cabinet) + ", ROW=" + String(packet.row) +
+        ", COL=" + String(packet.column) + ", QTY=" + String(packet.quantity) + ", CLR=" + String(packet.color) +
+        ", CMD=" + String(packet.command) + ", RET=" + String(packet.ret_status) + ", TRS=" + String(packet.transition) +
+        ", DEV=" + String(packet.device) + ", SUM=" + String(packet.sum) + ", SUM_CAL=" + String(calc_sum) + "\n");
+
+    return 1;
 }

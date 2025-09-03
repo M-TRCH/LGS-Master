@@ -303,12 +303,19 @@ void setup()
 
 void loop() 
 {
-
+    // panel_switch_debug();
+    
     #ifdef ETHERNET_UTILS_H    
         tcp_server_update();
+        receive_tcp_packet(tcp_packet);
     #endif
 
-    // panel_switch_debug();
+    
+    
+
+
+
+
     
     // .2 Ethernet
     // clientUpdate();
