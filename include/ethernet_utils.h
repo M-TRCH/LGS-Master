@@ -14,10 +14,10 @@
 // MQTT settings
 #define MQTT_BROKER_IP      "demo.siamatic.dev" 
 #define MQTT_BROKER_PORT    1883
-#define MQTT_CLIENT_ID      "mqttx_69aae4e3"
+#define MQTT_CLIENT_ID      "lgs_master"
 #define MQTT_USERNAME       "admin"
 #define MQTT_PASSWORD       "admin"
-#define MQTT_TEST_TOPIC  "test/opta"
+#define MQTT_TEST_TOPIC     "test/opta"
 
 // Struct for storing client information
 struct TcpClientInfo 

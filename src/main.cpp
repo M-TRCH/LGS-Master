@@ -263,7 +263,7 @@ void setup()
 
         // Initialize MQTT connection
         mqtt_init();
-        mqtt_test_publish("Hello Siamatic!");
+        // mqtt_test_publish("Hello Siamatic!");
     #endif
 
     // // .2 Subsystem initialize
@@ -321,6 +321,14 @@ void loop()
             // Echo back with FIRST_SUCCEED status.
             tcp_packet.ret_status = packet_status.FIRST_SUCCEED;    
             return_tcp_packet(tcp_packet);
+        }
+
+        if (debounce_sw(W_SW_PIN))
+        {
+            char msg[50];
+            sprintf(msg, "Hello Siamatic: %lu", millis());
+            Serial.println("MQTT Message: " + String(msg));
+            mqtt_test_publish(msg);
         }
     #endif
 

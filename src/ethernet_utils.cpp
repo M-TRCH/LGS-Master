@@ -260,13 +260,13 @@ bool mqtt_init()
     {
         mqtt_info.connected = true;
         mqtt_info.last_error = "";
-        Serial.println("MQTT: Connected to broker.");
+        Serial.println("MQTT: Connected to broker");
         return true;
     } 
     else 
     {
         mqtt_info.connected = false;
-        mqtt_info.last_error = "MQTT: Failed to connect to broker.";
+        mqtt_info.last_error = "MQTT: Failed to connect to broker";
         Serial.println(mqtt_info.last_error);
         return false;
     }
@@ -276,17 +276,17 @@ bool mqtt_test_publish(const char* msg)
 {
     if (!mqtt_info.connected) 
     {
-        Serial.println("MQTT: Not connected, cannot publish.");
+        Serial.println("MQTT: Not connected, cannot publish");
         return false;
     }
     bool result = mqtt_client.publish(MQTT_TEST_TOPIC, msg);
     if (result) 
     {
-        Serial.println("MQTT: Test publish succeeded.");
+        Serial.println("MQTT: Test publish succeeded");
     } 
     else 
     {
-        Serial.println("MQTT: Test publish failed.");
+        Serial.println("MQTT: Test publish failed");
     }
     return result;
 }
