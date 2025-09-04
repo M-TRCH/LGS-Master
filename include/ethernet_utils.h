@@ -34,10 +34,22 @@ struct TcpPacket
     int sum;
 };
 
+// Packet status codes
+struct PacketStatus 
+{
+    static const int FIRST_SUCCEED    = 1;
+    static const int SECOND_SUCCEED   = 2;
+    static const int NO_ACTION        = 3;
+    static const int IDLE             = 4;
+    static const int BUSY             = 5;
+    static const int FAIL             = 9;
+};
+
+extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition number per device
 extern EthernetServer tcp_server;
 extern TcpClientInfo tcp_client;
 extern TcpPacket tcp_packet;
-extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition number per device
+extern PacketStatus packet_status;
 
 /**
  * @brief Initialize Ethernet connection
@@ -78,5 +90,12 @@ void tcp_server_update();
  * Example packet 5: B01R00C00Q0000L01M09T00N05D0000S16 (hardware reset)
  */
 int receive_tcp_packet(TcpPacket &packet);
+
+/**
+ * @brief Send a TCP packet to client.
+ * @param packet Reference to TcpPacket struct to send.
+ * @return 1 if sent successfully, 0 otherwise.
+ */
+int return_tcp_packet(const TcpPacket& packet);
 
 #endif

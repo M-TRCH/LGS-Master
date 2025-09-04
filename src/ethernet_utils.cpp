@@ -1,9 +1,10 @@
 #include "ethernet_utils.h"
 
+uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for each device
 EthernetServer tcp_server(TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
 TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
-uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for each device
+PacketStatus packet_status;
 
 void ethernet_init()
 {
@@ -157,10 +158,91 @@ int receive_tcp_packet(TcpPacket &packet)
     transition_numbers[packet.device] = packet.transition;
 
     // Debug print
-    PRINT(DEBUG_VERBOSE, "Packet received: CAB=" + String(packet.cabinet) + ", ROW=" + String(packet.row) +
+    PRINT(DEBUG_VERBOSE, "Packet received: CBT=" + String(packet.cabinet) + ", ROW=" + String(packet.row) +
         ", COL=" + String(packet.column) + ", QTY=" + String(packet.quantity) + ", CLR=" + String(packet.color) +
         ", CMD=" + String(packet.command) + ", RET=" + String(packet.ret_status) + ", TRS=" + String(packet.transition) +
         ", DEV=" + String(packet.device) + ", SUM=" + String(packet.sum) + ", SUM_CAL=" + String(calc_sum) + "\n");
 
+    return 1;
+}
+
+int return_tcp_packet(const TcpPacket& packet)
+{
+    // Check client status
+    if (!tcp_client.client || !tcp_client.client.connected()) 
+    {
+        PRINT(DEBUG_BASIC, F("Error: No active client for sending packet\n"));
+        return 0;
+    }
+
+    // Check field size limits
+    if (packet.cabinet < 0 || packet.cabinet > 99 ||
+        packet.row < 0 || packet.row > 99 ||
+        packet.column < 0 || packet.column > 99 ||
+        packet.quantity < 0 || packet.quantity > 9999 ||
+        packet.color < 0 || packet.color > 99 ||
+        packet.command < 0 || packet.command > 99 ||
+        packet.ret_status < 0 || packet.ret_status > 99 ||
+        packet.transition < 0 || packet.transition > 99 ||
+        packet.device < 0 || packet.device > 9998) 
+    {
+        PRINT(DEBUG_BASIC, F("Error: Packet field out of range\n"));
+        return 0;
+    }
+
+    // Calculate summary (checksum)
+    int calc_sum = packet.cabinet + packet.row + packet.column + packet.quantity + packet.color +
+                   packet.command + packet.ret_status + packet.transition + packet.device;
+    calc_sum = calc_sum % 100;  // Sum is last two digits
+
+    // Send packet
+    tcp_client.client.print("B");
+    if (packet.cabinet < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.cabinet);
+
+    tcp_client.client.print("R");
+    if (packet.row < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.row);
+
+    tcp_client.client.print("C");
+    if (packet.column < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.column);
+
+    tcp_client.client.print("Q");
+    if (packet.quantity < 1000) tcp_client.client.print("0");
+    if (packet.quantity < 100) tcp_client.client.print("0");
+    if (packet.quantity < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.quantity);
+
+    tcp_client.client.print("L");
+    if (packet.color < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.color);
+
+    tcp_client.client.print("M");
+    if (packet.command < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.command);
+
+    tcp_client.client.print("T");
+    if (packet.ret_status < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.ret_status);
+
+    tcp_client.client.print("N");
+    if (packet.transition < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.transition);
+
+    tcp_client.client.print("D");
+    if (packet.device < 1000) tcp_client.client.print("0");
+    if (packet.device < 100) tcp_client.client.print("0");
+    if (packet.device < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.device);
+
+    tcp_client.client.print("S");
+    if (calc_sum < 10) tcp_client.client.print("0");
+    tcp_client.client.print(calc_sum);
+
+    tcp_client.client.println();
+
+    // Success
+    PRINT(DEBUG_BASIC, "Packet sent to client: transition=" + String(packet.transition) + ", device=" + String(packet.device) + "\n");
     return 1;
 }

@@ -307,7 +307,12 @@ void loop()
     
     #ifdef ETHERNET_UTILS_H    
         tcp_server_update();
-        receive_tcp_packet(tcp_packet);
+        if (receive_tcp_packet(tcp_packet))
+        {
+            // Echo back with FIRST_SUCCEED status.
+            tcp_packet.ret_status = packet_status.FIRST_SUCCEED;    
+            return_tcp_packet(tcp_packet);
+        }
     #endif
 
     

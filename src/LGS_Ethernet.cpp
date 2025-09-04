@@ -118,6 +118,8 @@ void returnPacket(int cbt, int row, int col, int qty, int clr, int cmd, int ret,
 { 
   if (client && client.connected())
   {
+    // Example packet: B03R01C02Q0098L01M03T00N01D4000S09
+    
     int sum = digitLimiter(cbt + row + col + qty + clr + cmd + ret + trs + dev); 
 
     client.print("B");    // Cabinet
