@@ -4,11 +4,20 @@
 #include <Ethernet.h>
 #include "system.h"
 #include "config.h"
+#include <PubSubClient.h>
 
 // tcp server settings
 #define TCP_SERVER_PORT     2000
 #define CLIENT_TIMEOUT_MS   30000   // timeout in ms
 #define MAX_DEVICE          9999    // maximum number of devices
+
+// MQTT settings
+#define MQTT_BROKER_IP      "demo.siamatic.dev" 
+#define MQTT_BROKER_PORT    1883
+#define MQTT_CLIENT_ID      "mqttx_69aae4e3"
+#define MQTT_USERNAME       "admin"
+#define MQTT_PASSWORD       "admin"
+#define MQTT_TEST_TOPIC  "test/opta"
 
 // Struct for storing client information
 struct TcpClientInfo 
@@ -45,11 +54,25 @@ struct PacketStatus
     static const int FAIL             = 9;
 };
 
+// Struct for MQTT client info
+struct MqttClientInfo 
+{
+    PubSubClient* client;
+    bool connected;
+    String last_error;
+};
+
+// tcp server and client instances 
 extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition number per device
 extern EthernetServer tcp_server;
 extern TcpClientInfo tcp_client;
 extern TcpPacket tcp_packet;
 extern PacketStatus packet_status;
+
+// MQTT client instances
+extern EthernetClient eth_client;
+extern PubSubClient mqtt_client;
+extern MqttClientInfo mqtt_info;
 
 /**
  * @brief Initialize Ethernet connection
@@ -97,5 +120,17 @@ int receive_tcp_packet(TcpPacket &packet);
  * @return 1 if sent successfully, 0 otherwise.
  */
 int return_tcp_packet(const TcpPacket& packet);
+
+/**
+ * @brief Initialize MQTT client and connect to broker.
+ * @return true if connected, false otherwise.
+ */
+bool mqtt_init();
+
+/**
+ * @brief Test MQTT connection by publishing a message.
+ * @return true if published, false otherwise.
+ */
+bool mqtt_test_publish(const char* msg);
 
 #endif

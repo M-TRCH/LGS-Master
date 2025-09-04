@@ -245,16 +245,25 @@ bool run()
 void setup() 
 {
     #ifdef SYSTEM_H
+        // Initialize system
         system_init();
     #endif
 
     #ifdef CONFIG_H
+        // Initialize configuration such as ip address
         config_init();
     #endif
 
     #ifdef ETHERNET_UTILS_H
+        // Initialize Ethernet and TCP server
         ethernet_init();
+
+        // Initialize TCP server
         tcp_server_init();
+
+        // Initialize MQTT connection
+        mqtt_init();
+        mqtt_test_publish("Hello Siamatic!");
     #endif
 
     // // .2 Subsystem initialize

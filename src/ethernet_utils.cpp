@@ -1,10 +1,16 @@
 #include "ethernet_utils.h"
 
+// tcp server and client instances
 uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for each device
 EthernetServer tcp_server(TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
 TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
 PacketStatus packet_status;
+
+// MQTT client instances
+EthernetClient eth_client;
+PubSubClient mqtt_client(eth_client);
+MqttClientInfo mqtt_info = {&mqtt_client, false, ""};
 
 void ethernet_init()
 {
@@ -245,4 +251,42 @@ int return_tcp_packet(const TcpPacket& packet)
     // Success
     PRINT(DEBUG_BASIC, "Packet sent to client: transition=" + String(packet.transition) + ", device=" + String(packet.device) + "\n");
     return 1;
+}
+
+bool mqtt_init()
+{
+    mqtt_client.setServer(MQTT_BROKER_IP, MQTT_BROKER_PORT);
+    if (mqtt_client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD)) 
+    {
+        mqtt_info.connected = true;
+        mqtt_info.last_error = "";
+        Serial.println("MQTT: Connected to broker.");
+        return true;
+    } 
+    else 
+    {
+        mqtt_info.connected = false;
+        mqtt_info.last_error = "MQTT: Failed to connect to broker.";
+        Serial.println(mqtt_info.last_error);
+        return false;
+    }
+}
+
+bool mqtt_test_publish(const char* msg)
+{
+    if (!mqtt_info.connected) 
+    {
+        Serial.println("MQTT: Not connected, cannot publish.");
+        return false;
+    }
+    bool result = mqtt_client.publish(MQTT_TEST_TOPIC, msg);
+    if (result) 
+    {
+        Serial.println("MQTT: Test publish succeeded.");
+    } 
+    else 
+    {
+        Serial.println("MQTT: Test publish failed.");
+    }
+    return result;
 }
