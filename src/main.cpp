@@ -2,6 +2,7 @@
 #include "system.h"
 #include "config.h"
 #include "ethernet_utils.h"
+#include "logger.h"
 
 /*
 #define DEV_MODE_TIMEOUT      2000
@@ -61,14 +62,12 @@ void R_SW_Event()
                 {
                     for (int r=0; r<=9; r++)  
                     {
-                        Serial.print("[" + String(r) + ", " + String(c) + "]: ");
-                        Serial.println(nct_setActive(r, c, 1, 50, 0));  
+                        LOG_DEBUG_F(CAT_LGS, "Setting active [%d, %d]: %d", r, c, nct_setActive(r, c, 1, 50, 0));
                         delay(1500);
                     }
                     for (int r=0; r<=9; r++)  
                     {
-                        Serial.print("[" + String(r) + ", " + String(c) + "]: ");
-                        Serial.println(nct_setActive(r, c));  
+                        LOG_DEBUG_F(CAT_LGS, "Deactivating [%d, %d]: %d", r, c, nct_setActive(r, c));
                         delay(1500);
                     }
                 }
@@ -244,6 +243,11 @@ bool run()
 
 void setup() 
 {
+    #ifdef LOGGER_H
+        // Initialize logging system first
+        logger_init(LOG_VERBOSE);
+    #endif
+
     #ifdef SYSTEM_H
         // Initialize system
         system_init();
@@ -316,6 +320,9 @@ void loop()
     #ifdef ETHERNET_UTILS_H
         // Update TCP server and manage client connection    
         tcp_server_update();
+        
+        // Update MQTT connection
+        mqtt_update();
 
         // Update MQTT client connection
         mqtt_update();

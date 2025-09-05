@@ -140,12 +140,12 @@ bool mqtt_init();
 void mqtt_update();
 
 /**
- * @brief Publish a message to MQTT broker.
- * @param type Message type: "info", "warning", "error"
+ * @brief Publish a JSON formatted message to MQTT broker.
+ * @param type Message type (use MqttMessageType constants)
  * @param message Message content
  * @param topic MQTT topic to publish to (default: MQTT_DEFAULT_TOPIC)
  * @return true if published successfully, false otherwise.
  */
-bool mqtt_publish_json(const char* type, const String message, const char* topic = MQTT_DEFAULT_TOPIC);
+bool mqtt_publish_json(const char* type, const String& message, const char* topic = MQTT_DEFAULT_TOPIC);
 
 #endif

@@ -11,6 +11,7 @@
 
 #include <Arduino.h>
 #include "LGSbus.h"
+#include "logger.h"
 
 // (0) System config    
 #define RS485_BAUDRATE  9600

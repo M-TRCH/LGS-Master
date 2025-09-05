@@ -14,7 +14,7 @@ MqttClientInfo mqtt_info = {&mqtt_client, false, ""};
 void ethernet_init()
 {
     // Initialize Ethernet with static IP only
-    PRINT(DEBUG_BASIC, F("Ethernet initializing with static IP\n"));
+    LOG_INFO_MSG(CAT_NETWORK, "Ethernet initializing with static IP");
 
     // Get IP configuration from device_info struct
     int ip1 = device_info.ip_address.ip1;
@@ -29,41 +29,34 @@ void ethernet_init()
     // Initialize with static IP configuration
     Ethernet.begin(ip, dns, gateway, subnet);
 
-    // Print IP address
-    PRINT(DEBUG_VERBOSE, F("IP Address: "));
-    PRINT(DEBUG_VERBOSE, Ethernet.localIP());
+    // Log IP address
+    LOG_VERBOSE_F(CAT_NETWORK, "IP Address: %d.%d.%d.%d", 
+                  Ethernet.localIP()[0], Ethernet.localIP()[1], 
+                  Ethernet.localIP()[2], Ethernet.localIP()[3]);
     
-    // Print MAC address
+    // Log MAC address
     byte mac[6];
     Ethernet.MACAddress(mac);
-    PRINT(DEBUG_VERBOSE, F("\nMAC Address: "));
-    for (int i = 0; i < 6; i++) 
-    {
-        if (mac[i] < 16) PRINT(DEBUG_VERBOSE, F("0"));
-        PRINT(DEBUG_VERBOSE, String(mac[i], HEX));
-        if (i < 5) PRINT(DEBUG_VERBOSE, F(":"));
-    }
-    PRINT(DEBUG_VERBOSE, F("\n"));
+    LOG_VERBOSE_F(CAT_NETWORK, "MAC Address: %02X:%02X:%02X:%02X:%02X:%02X",
+                  mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     // Check link status
     if (Ethernet.linkStatus() == LinkOFF) 
     {
-        PRINT(DEBUG_VERBOSE, F("Ethernet cable is not connected.\n"));
+        LOG_WARN_MSG(CAT_NETWORK, "Ethernet cable is not connected");
     } 
     else 
     {
-        PRINT(DEBUG_VERBOSE, F("Ethernet cable connected successfully\n"));
+        LOG_INFO_MSG(CAT_NETWORK, "Ethernet cable connected successfully");
     }
-    PRINT(DEBUG_BASIC, F("Ethernet initialized\n"));
+    LOG_INFO_MSG(CAT_NETWORK, "Ethernet initialized successfully");
 }
 
 void tcp_server_init()
 {
     // Start the TCP server
     tcp_server.begin();
-    PRINT(DEBUG_BASIC, F("TCP server initialized on port "));
-    PRINT(DEBUG_BASIC, TCP_SERVER_PORT);
-    PRINT(DEBUG_BASIC, F("\n"));
+    LOG_INFO_F(CAT_TCP, "TCP server initialized on port %d", TCP_SERVER_PORT);
 }
 
 void tcp_server_update()
@@ -76,7 +69,7 @@ void tcp_server_update()
         tcp_client.client = new_client;
         tcp_client.connected = true;
         tcp_client.info = "Client connected: " + new_client.remoteIP().toString() + ":" + String(new_client.remotePort());
-        PRINT(DEBUG_BASIC, tcp_client.info + F("\n"));
+        LOG_INFO_MSG(CAT_TCP, tcp_client.info);
         tcp_client.last_active_time = millis();
     }
 
@@ -88,7 +81,7 @@ void tcp_server_update()
             tcp_client.client.stop();
             tcp_client.connected = false;
             tcp_client.info = "Client disconnected (lost connection)";
-            PRINT(DEBUG_BASIC, tcp_client.info + F("\n"));
+            LOG_INFO_MSG(CAT_TCP, tcp_client.info);
         }
         // If client is connected but inactive for too long, disconnect
         else if (millis() - tcp_client.last_active_time > CLIENT_TIMEOUT_MS) 
@@ -96,7 +89,7 @@ void tcp_server_update()
             tcp_client.client.stop();
             tcp_client.connected = false;
             tcp_client.info = "Client disconnected (timeout)";
-            PRINT(DEBUG_BASIC, tcp_client.info + F("\n"));
+            LOG_WARN_MSG(CAT_TCP, tcp_client.info);
         }
         // If client sent any data, reset timeout
         else if (tcp_client.client.available()) 
@@ -139,7 +132,7 @@ int receive_tcp_packet(TcpPacket &packet)
     // Check device index range to prevent overflow
     if (packet.device < 0 || packet.device >= MAX_DEVICE) 
     {
-        PRINT(DEBUG_BASIC, F("Error: Device index out of range\n"));
+        LOG_ERROR_MSG(CAT_TCP, "Device index out of range");
         return 0;
     }
 
@@ -149,24 +142,23 @@ int receive_tcp_packet(TcpPacket &packet)
     calc_sum = calc_sum % 100;  // Sum is last two digits
     if (packet.sum != calc_sum) 
     {
-        PRINT(DEBUG_BASIC, F("Error: Packet sum mismatch\n"));
+        LOG_ERROR_F(CAT_TCP, "Packet checksum mismatch - received: %d, calculated: %d", packet.sum, calc_sum);
         return 0;
     }
 
     if (packet.transition == transition_numbers[packet.device]) 
     {
-        PRINT(DEBUG_BASIC, F("Error: Duplicate packet (same transition number)\n"));
+        LOG_WARN_F(CAT_TCP, "Duplicate packet detected (device %d, transition %d)", packet.device, packet.transition);
         return 0;
     }
 
     // Update transition number for this device
     transition_numbers[packet.device] = packet.transition;
 
-    // Debug print
-    PRINT(DEBUG_VERBOSE, "Packet received: CBT=" + String(packet.cabinet) + ", ROW=" + String(packet.row) +
-        ", COL=" + String(packet.column) + ", QTY=" + String(packet.quantity) + ", CLR=" + String(packet.color) +
-        ", CMD=" + String(packet.command) + ", RET=" + String(packet.ret_status) + ", TRS=" + String(packet.transition) +
-        ", DEV=" + String(packet.device) + ", SUM=" + String(packet.sum) + ", SUM_CAL=" + String(calc_sum) + "\n");
+    // Debug print packet details
+    LOG_VERBOSE_F(CAT_TCP, "Packet received - Cabinet:%d Row:%d Col:%d Qty:%d Color:%d Cmd:%d Status:%d Trans:%d Device:%d Sum:%d", 
+                  packet.cabinet, packet.row, packet.column, packet.quantity, packet.color,
+                  packet.command, packet.ret_status, packet.transition, packet.device, packet.sum);
 
     return 1;
 }
@@ -176,7 +168,7 @@ int return_tcp_packet(const TcpPacket& packet)
     // Check client status
     if (!tcp_client.client || !tcp_client.client.connected()) 
     {
-        PRINT(DEBUG_BASIC, F("Error: No active client for sending packet\n"));
+        LOG_ERROR_MSG(CAT_TCP, "No active client for sending packet");
         return 0;
     }
 
@@ -259,14 +251,14 @@ bool mqtt_init()
     {
         mqtt_info.connected = true;
         mqtt_info.last_error = "";
-        PRINT(DEBUG_BASIC, "MQTT: Connected to broker\n");
+        LOG_INFO_MSG(CAT_MQTT, "Connected to MQTT broker");
         return true;
     } 
     else 
     {
         mqtt_info.connected = false;
-        mqtt_info.last_error = "MQTT: Failed to connect to broker";
-        PRINT(DEBUG_BASIC, mqtt_info.last_error);
+        mqtt_info.last_error = "Failed to connect to MQTT broker";
+        LOG_ERROR_MSG(CAT_MQTT, mqtt_info.last_error);
         return false;
     }
 }
@@ -275,18 +267,18 @@ void mqtt_update()
 {
     if (!mqtt_client.connected()) 
     {
-        PRINT(DEBUG_BASIC, "MQTT: Disconnected, attempting reconnect...\n");
+        LOG_WARN_MSG(CAT_MQTT, "Disconnected, attempting reconnect");
         if (mqtt_client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD)) 
         {
             mqtt_info.connected = true;
             mqtt_info.last_error = "";
-            PRINT(DEBUG_BASIC, "MQTT: Reconnected to broker\n");
+            LOG_INFO_MSG(CAT_MQTT, "Reconnected to broker");
         } 
         else 
         {
             mqtt_info.connected = false;
-            mqtt_info.last_error = "MQTT: Failed to reconnect";
-            PRINT(DEBUG_BASIC, mqtt_info.last_error + "\n");
+            mqtt_info.last_error = "Failed to reconnect";
+            LOG_ERROR_MSG(CAT_MQTT, mqtt_info.last_error);
         }
     }
     else
@@ -296,23 +288,25 @@ void mqtt_update()
     mqtt_client.loop(); // Process incoming/outgoing MQTT messages
 }
 
-bool mqtt_publish_json(const char* type, const String message, const char* topic)
+bool mqtt_publish_json(const char* type, const String& message, const char* topic)
 {
     if (!mqtt_info.connected) 
     {
-        PRINT(DEBUG_BASIC, "MQTT: Not connected, cannot publish\n");
+        LOG_ERROR_MSG(CAT_MQTT, "Cannot publish - not connected to broker");
         return false;
     }
+    
     String json = "{\"type\":\"" + String(type) + "\",\"message\":\"" + message + "\"}";
     bool result = mqtt_client.publish(topic, json.c_str());
+    
     if (result) 
     {
-        PRINT(DEBUG_BASIC, "MQTT: JSON publish succeeded\n");
-        PRINT(DEBUG_VERBOSE, "MQTT: Published to topic " + String(topic) + ": " + json + "\n");
+        LOG_INFO_F(CAT_MQTT, "Published to topic %s", topic);
+        LOG_VERBOSE_MSG(CAT_MQTT, "Published JSON: " + json);
     } 
     else 
     {
-        PRINT(DEBUG_BASIC, "MQTT: JSON publish failed\n");
+        LOG_ERROR_F(CAT_MQTT, "Failed to publish to topic %s", topic);
     }
     return result;
 }

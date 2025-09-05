@@ -2,6 +2,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 #include <Arduino.h>
+#include "logger.h"
 
 // pins configuration
 #define RELAY_1_PIN             D0
@@ -25,6 +26,7 @@
 #define RS485_TIMEOUT           50
 #define MODULE_STARTUP_DELAY    5000
 
+// Legacy debug levels (for backward compatibility)
 enum DebugLevel
 {
     DEBUG_NONE = 0,
@@ -33,9 +35,13 @@ enum DebugLevel
 };
 extern DebugLevel debugLevel;
 
-// macro definitions
+// Legacy PRINT macro (redirects to new logger)
 #define PRINT(level, msg) \
-    do { if (debugLevel >= level) Serial.print(msg); } while(0)
+    do { \
+        LogLevel new_level = (level == DEBUG_BASIC) ? LOG_INFO : \
+                            (level == DEBUG_VERBOSE) ? LOG_VERBOSE : LOG_NONE; \
+        if (new_level != LOG_NONE) log_message(new_level, CAT_SYSTEM, String(msg)); \
+    } while(0)
 
 /* @brief Initialize system: pins, serial communication, and config
  */

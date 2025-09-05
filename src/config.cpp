@@ -47,9 +47,7 @@ String firmwareVersionToString(const FirmwareVersion_t* version)
 
 void printDeviceInfo(const DeviceInfo_t* info) 
 {
-    PRINT(DEBUG_VERBOSE, F("Firmware Version: "));
-    PRINT(DEBUG_VERBOSE, firmwareVersionToString(&info->firmware_version));
-    PRINT(DEBUG_VERBOSE, F("\n"));
+    LOG_VERBOSE_MSG(CAT_CONFIG, "Firmware Version: " + firmwareVersionToString(&info->firmware_version));
 }
 
 

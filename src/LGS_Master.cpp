@@ -1,5 +1,6 @@
 
 #include "LGS_Master.h"
+#include "logger.h"
 
 LGSbus bus;
 
@@ -27,19 +28,17 @@ int moduleCheck(int row, int col)
 
 void std_moduleCheck()
 {
-  Serial.println("Opta/debug: module check");
+  LOG_INFO_MSG(CAT_LGS, "Starting module check");
   for (int r=8; r>=1; r--)
   {
-    Serial.print("\tRow ");
-    Serial.print(r);
-    Serial.print(": ");
+    String row_status = "Row " + String(r) + ": ";
     for (int c=1; c<=8; c++)
     {
-      Serial.print(moduleCheck(r, c));
+      row_status += String(moduleCheck(r, c));
       if (r == 1 && c >= 6)  break;
-      if (c != 8) Serial.print(", ");
+      if (c != 8) row_status += ", ";
     }
-    Serial.println();
+    LOG_DEBUG_MSG(CAT_LGS, row_status);
   }
 }
 
@@ -104,18 +103,16 @@ int std_requestStatus(int row, int col, int cl_in)
 
 void nct_moduleCheck()
 {
-  Serial.println("Opta/debug: module check");
+  LOG_INFO_MSG(CAT_LGS, "Starting NCT module check");
   for (int r=9; r>=0; r--)
   {
-    Serial.print("\tRow ");
-    Serial.print(r);
-    Serial.print(": ");
+    String row_status = "Row " + String(r) + ": ";
     for (int c=1; c<=8; c++)
     {
-      Serial.print(moduleCheck(r, c));
-      if (c != 8) Serial.print(", ");
+      row_status += String(moduleCheck(r, c));
+      if (c != 8) row_status += ", ";
     }
-    Serial.println();
+    LOG_DEBUG_MSG(CAT_LGS, row_status);
   }
 }
 
@@ -148,37 +145,35 @@ int nct_setActive(int row, int col, int cl, int bn, int num)
 
 void nct_allUnlock()
 {
-  Serial.println("Opta/debug: all unlock");
+  LOG_INFO_MSG(CAT_LGS, "Starting all unlock sequence");
   for (int r=9; r>=0; r--)
   {
-    Serial.print("\tRow ");
-    Serial.print(r);
-    Serial.print(": ");
+    String row_status = "Row " + String(r) + " unlock: ";
     for (int c=1; c<=8; c++)
     {
-      Serial.print(nct_setActive(r, c, 1, 5, 0));
-      if (c != 8) Serial.print(", ");
+      int result = nct_setActive(r, c, 1, 5, 0);
+      row_status += String(result);
+      if (c != 8) row_status += ", ";
       delay(800);
     }
-    Serial.println();
+    LOG_DEBUG_MSG(CAT_LGS, row_status);
   }  
 }
 
 void nct_allLock()
 {
-  Serial.println("Opta/debug: all lock");
+  LOG_INFO_MSG(CAT_LGS, "Starting all lock sequence");
   for (int r=9; r>=0; r--)
   {
-    Serial.print("\tRow ");
-    Serial.print(r);
-    Serial.print(": ");
+    String row_status = "Row " + String(r) + " lock: ";
     for (int c=1; c<=8; c++)
     {
-      Serial.print(nct_setActive(r, c));
-      if (c != 8) Serial.print(", ");
+      int result = nct_setActive(r, c);
+      row_status += String(result);
+      if (c != 8) row_status += ", ";
       delay(800);
     }
-    Serial.println();
+    LOG_DEBUG_MSG(CAT_LGS, row_status);
   }  
 }
 
