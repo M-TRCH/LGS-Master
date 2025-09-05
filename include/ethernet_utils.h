@@ -135,6 +135,11 @@ int return_tcp_packet(const TcpPacket& packet);
 bool mqtt_init();
 
 /**
+ * @brief Update MQTT client connection.
+ */
+void mqtt_update();
+
+/**
  * @brief Publish a message to MQTT broker.
  * @param type Message type: "info", "warning", "error"
  * @param message Message content

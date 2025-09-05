@@ -271,6 +271,31 @@ bool mqtt_init()
     }
 }
 
+void mqtt_update()
+{
+    if (!mqtt_client.connected()) 
+    {
+        PRINT(DEBUG_BASIC, "MQTT: Disconnected, attempting reconnect...\n");
+        if (mqtt_client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD)) 
+        {
+            mqtt_info.connected = true;
+            mqtt_info.last_error = "";
+            PRINT(DEBUG_BASIC, "MQTT: Reconnected to broker\n");
+        } 
+        else 
+        {
+            mqtt_info.connected = false;
+            mqtt_info.last_error = "MQTT: Failed to reconnect";
+            PRINT(DEBUG_BASIC, mqtt_info.last_error + "\n");
+        }
+    }
+    else
+    {
+        mqtt_info.connected = true;
+    }
+    mqtt_client.loop(); // Process incoming/outgoing MQTT messages
+}
+
 bool mqtt_publish_json(const char* type, const String message, const char* topic)
 {
     if (!mqtt_info.connected) 

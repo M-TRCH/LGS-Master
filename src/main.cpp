@@ -313,16 +313,24 @@ void loop()
 {
     // panel_switch_debug();
     
-    #ifdef ETHERNET_UTILS_H    
+    #ifdef ETHERNET_UTILS_H
+        // Update TCP server and manage client connection    
         tcp_server_update();
+
+        // Update MQTT client connection
+        mqtt_update();
+
+        // Check for incoming TCP packets
         if (receive_tcp_packet(tcp_packet))
         {
             // Echo back with FIRST_SUCCEED status.
             tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
+            
+            // Process and respond to the packet
             return_tcp_packet(tcp_packet);
-            mqtt_publish_json(MqttMessageType::INFO, "Received TCP packet: transition=" + String(tcp_packet.transition) + ", device=" + String(tcp_packet.device));
-            // mqtt_publish_json(MqttMessageType::INFO, "Received TCP packet");
 
+            // Publish MQTT message
+            mqtt_publish_json(MqttMessageType::INFO, "Received TCP packet: transition=" + String(tcp_packet.transition) + ", device=" + String(tcp_packet.device));
         }
 
         if (debounce_sw(W_SW_PIN))
