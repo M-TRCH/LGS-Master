@@ -2,9 +2,9 @@
 #define ETHERNET_UTILS_H
 
 #include <Ethernet.h>
+#include <PubSubClient.h>
 #include "system.h"
 #include "config.h"
-#include <PubSubClient.h>
 
 // tcp server settings
 #define TCP_SERVER_PORT     2000
@@ -12,12 +12,12 @@
 #define MAX_DEVICE          9999    // maximum number of devices
 
 // MQTT settings
-#define MQTT_BROKER_IP      "demo.siamatic.dev" 
-#define MQTT_BROKER_PORT    1883
-#define MQTT_CLIENT_ID      "lgs_master"
-#define MQTT_USERNAME       "admin"
-#define MQTT_PASSWORD       "admin"
-#define MQTT_DEFAULT_TOPIC  "lgs/opta"
+#define MQTT_BROKER_IP              "demo.siamatic.dev" 
+#define MQTT_BROKER_PORT            1883
+#define MQTT_USERNAME               "admin"
+#define MQTT_PASSWORD               "admin"
+#define MQTT_DEFAULT_TOPIC          "lgs/opta"
+#define MQTT_RECONNECT_INTERVAL_MS  (15 * 60000)  // wait 15 minutes between reconnect attempts
 
 // Struct for storing client information
 struct TcpClientInfo 
@@ -60,6 +60,7 @@ struct MqttClientInfo
     PubSubClient* client;
     bool connected;
     String last_error;
+    uint32_t last_reconnect_attempt;  // Track last reconnect attempt time
 };
 
 // MQTT message types
@@ -68,6 +69,8 @@ struct MqttMessageType
     static constexpr const char* INFO    = "info";
     static constexpr const char* WARNING = "warning";
     static constexpr const char* ERROR   = "error";
+    static constexpr const char* DEBUG   = "debug";
+    static constexpr const char* VERBOSE = "verbose";
 };
 
 // tcp server and client instances 
@@ -80,6 +83,7 @@ extern TcpPacket tcp_packet;
 extern EthernetClient eth_client;
 extern PubSubClient mqtt_client;
 extern MqttClientInfo mqtt_info;
+extern String mqtt_client_id;
 
 /**
  * @brief Initialize Ethernet connection
@@ -126,7 +130,7 @@ int receive_tcp_packet(TcpPacket &packet);
  * @param packet Reference to TcpPacket struct to send.
  * @return 1 if sent successfully, 0 otherwise.
  */
-int return_tcp_packet(const TcpPacket& packet);
+int return_tcp_packet(TcpPacket& packet);
 
 /**
  * @brief Initialize MQTT client and connect to broker.

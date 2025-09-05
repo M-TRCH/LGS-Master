@@ -27,6 +27,15 @@
 				"$platformio"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Build Project",
+			"type": "shell",
+			"command": "C:\\Users\\mteer\\.platformio\\penv\\Scripts\\platformio.exe run",
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build"
 		}
 	]
 }

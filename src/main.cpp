@@ -322,16 +322,10 @@ void loop()
         // Update MQTT connection
         mqtt_update();
 
-        // Update MQTT client connection
-        mqtt_update();
-
         // Check for incoming TCP packets
         if (receive_tcp_packet(tcp_packet))
         {
-            // Echo back with FIRST_SUCCEED status.
-            tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
-            
-            // Publish MQTT message
+            // Log received packet details
             mqtt_publish_json(MqttMessageType::INFO, 
                 "Received packet - Cabinet:" + String(tcp_packet.cabinet) +
                 " Row:" + String(tcp_packet.row) +
@@ -344,26 +338,41 @@ void loop()
                 " Device:" + String(tcp_packet.device) +
                 " Sum:" + String(tcp_packet.sum));
 
+            // Echo back with FIRST_SUCCEED status.
+            tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
+            
             // Process and respond to the packet
-            return_tcp_packet(tcp_packet);
-
-
-        }
-
-        if (debounce_sw(W_SW_PIN))
-        {
-        
+            bool success = return_tcp_packet(tcp_packet);
+            if (success)
+            {
+                // Log sent packet details
+                mqtt_publish_json(MqttMessageType::INFO, 
+                    "Sent packet - Cabinet:" + String(tcp_packet.cabinet) +
+                    " Row:" + String(tcp_packet.row) +
+                    " Col:" + String(tcp_packet.column) +
+                    " Qty:" + String(tcp_packet.quantity) +
+                    " Color:" + String(tcp_packet.color) +
+                    " Cmd:" + String(tcp_packet.command) +
+                    " Status:" + String(tcp_packet.ret_status) +
+                    " Trans:" + String(tcp_packet.transition) +
+                    " Device:" + String(tcp_packet.device) +
+                    " Sum:" + String(tcp_packet.sum));
+            }
         }
     #endif
 
-    // // .5 Reset watchdog timer
+    if (debounce_sw(W_SW_PIN))
+    {
+        NVIC_SystemReset();
+    }
+
+
+
+    // Reset watchdog timer
     // if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
     // {
     //     kickWatchdogTimer = millis();
     //     mbed::Watchdog::get_instance().kick();
     // }
-
-    // // .6 Reset switch
-    // W_SW_Event();
 }
 

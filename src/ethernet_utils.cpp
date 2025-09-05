@@ -9,7 +9,8 @@ TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
 // MQTT client instances
 EthernetClient eth_client;
 PubSubClient mqtt_client(eth_client);
-MqttClientInfo mqtt_info = {&mqtt_client, false, ""};
+MqttClientInfo mqtt_info = {&mqtt_client, false, "", 0};
+String mqtt_client_id = "";
 
 void ethernet_init()
 {
@@ -28,7 +29,8 @@ void ethernet_init()
     
     // Initialize with static IP configuration
     Ethernet.begin(ip, dns, gateway, subnet);
-
+    mqtt_client_id = "lgs_" + String(device_info.ip_address.ip4);  // Use last octet of IP for client ID (e.g. lgs_12)
+    
     // Log IP address
     LOG_VERBOSE_F(CAT_NETWORK, "IP Address: %d.%d.%d.%d", 
                   Ethernet.localIP()[0], Ethernet.localIP()[1], 
@@ -163,7 +165,7 @@ int receive_tcp_packet(TcpPacket &packet)
     return 1;
 }
 
-int return_tcp_packet(const TcpPacket& packet)
+int return_tcp_packet(TcpPacket& packet)
 {
     // Check client status
     if (!tcp_client.client || !tcp_client.client.connected()) 
@@ -188,9 +190,9 @@ int return_tcp_packet(const TcpPacket& packet)
     }
 
     // Calculate summary (checksum)
-    int calc_sum = packet.cabinet + packet.row + packet.column + packet.quantity + packet.color +
+    packet.sum = packet.cabinet + packet.row + packet.column + packet.quantity + packet.color +
                    packet.command + packet.ret_status + packet.transition + packet.device;
-    calc_sum = calc_sum % 100;  // Sum is last two digits
+    packet.sum = packet.sum % 100;  // Sum is last two digits
 
     // Send packet
     tcp_client.client.print("B");
@@ -234,15 +236,15 @@ int return_tcp_packet(const TcpPacket& packet)
     tcp_client.client.print(packet.device);
 
     tcp_client.client.print("S");
-    if (calc_sum < 10) tcp_client.client.print("0");
-    tcp_client.client.print(calc_sum);
+    if (packet.sum < 10) tcp_client.client.print("0");
+    tcp_client.client.print(packet.sum);
 
     tcp_client.client.println();
 
     // Success
     LOG_VERBOSE_F(CAT_TCP, "Packet sent to client - Cabinet:%d Row:%d Col:%d Qty:%d Color:%d Cmd:%d Status:%d Trans:%d Device:%d Sum:%d", 
                 packet.cabinet, packet.row, packet.column, packet.quantity, packet.color,
-                packet.command, packet.ret_status, packet.transition, packet.device, calc_sum);
+                packet.command, packet.ret_status, packet.transition, packet.device, packet.sum);
 
     return 1;
 }
@@ -250,7 +252,7 @@ int return_tcp_packet(const TcpPacket& packet)
 bool mqtt_init()
 {
     mqtt_client.setServer(MQTT_BROKER_IP, MQTT_BROKER_PORT);
-    if (mqtt_client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD)) 
+    if (mqtt_client.connect(mqtt_client_id.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) 
     {
         mqtt_info.connected = true;
         mqtt_info.last_error = "";
@@ -270,18 +272,31 @@ void mqtt_update()
 {
     if (!mqtt_client.connected()) 
     {
-        LOG_WARN_MSG(CAT_MQTT, "Disconnected, attempting reconnect");
-        if (mqtt_client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD)) 
+        uint32_t current_time = millis();
+        
+        // Check if enough time has passed since last reconnect attempt
+        if (current_time - mqtt_info.last_reconnect_attempt >= MQTT_RECONNECT_INTERVAL_MS)
         {
-            mqtt_info.connected = true;
-            mqtt_info.last_error = "";
-            LOG_INFO_MSG(CAT_MQTT, "Reconnected to broker");
-        } 
-        else 
+            LOG_WARN_MSG(CAT_MQTT, "Disconnected, attempting reconnect");
+            mqtt_info.last_reconnect_attempt = current_time;
+
+            if (mqtt_client.connect(mqtt_client_id.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) 
+            {
+                mqtt_info.connected = true;
+                mqtt_info.last_error = "";
+                LOG_INFO_MSG(CAT_MQTT, "Reconnected to broker");
+            } 
+            else 
+            {
+                mqtt_info.connected = false;
+                mqtt_info.last_error = "Failed to reconnect";
+                LOG_ERROR_MSG(CAT_MQTT, mqtt_info.last_error);
+            }
+        }
+        // If not enough time has passed, just mark as disconnected
+        else
         {
             mqtt_info.connected = false;
-            mqtt_info.last_error = "Failed to reconnect";
-            LOG_ERROR_MSG(CAT_MQTT, mqtt_info.last_error);
         }
     }
     else

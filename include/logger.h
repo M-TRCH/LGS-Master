@@ -77,12 +77,4 @@ void log_printf(LogLevel level, LogCategory category, const char* format, ...);
 #define LOG_DEBUG_F(cat, fmt, ...)   log_printf(LOG_DEBUG, cat, fmt, ##__VA_ARGS__)
 #define LOG_VERBOSE_F(cat, fmt, ...) log_printf(LOG_VERBOSE, cat, fmt, ##__VA_ARGS__)
 
-// Legacy PRINT macro replacement - maps to new system
-#define PRINT(level, msg) \
-    do { \
-        LogLevel new_level = (level == DEBUG_BASIC) ? LOG_INFO : \
-                            (level == DEBUG_VERBOSE) ? LOG_VERBOSE : LOG_NONE; \
-        if (new_level != LOG_NONE) log_message(new_level, CAT_SYSTEM, String(msg)); \
-    } while(0)
-
 #endif // LOGGER_H
