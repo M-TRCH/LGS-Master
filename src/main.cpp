@@ -263,7 +263,6 @@ void setup()
 
         // Initialize MQTT connection
         mqtt_init();
-        // mqtt_test_publish("Hello Siamatic!");
     #endif
 
     // // .2 Subsystem initialize
@@ -319,74 +318,19 @@ void loop()
         if (receive_tcp_packet(tcp_packet))
         {
             // Echo back with FIRST_SUCCEED status.
-            tcp_packet.ret_status = packet_status.FIRST_SUCCEED;    
+            tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
             return_tcp_packet(tcp_packet);
+            mqtt_publish_json(MqttMessageType::INFO, "Received TCP packet: transition=" + String(tcp_packet.transition) + ", device=" + String(tcp_packet.device));
+            // mqtt_publish_json(MqttMessageType::INFO, "Received TCP packet");
+
         }
 
         if (debounce_sw(W_SW_PIN))
         {
-            char msg[50];
-            sprintf(msg, "Hello Siamatic: %lu", millis());
-            Serial.println("MQTT Message: " + String(msg));
-            mqtt_test_publish(msg);
+        
         }
     #endif
 
-    
-    
-
-
-
-
-    
-    // .2 Ethernet
-    // clientUpdate();
-
-    // .3 Development mode
-    // if (devModeActive)
-    // {
-    //     R_SW_Event();
-    //     G_SW_Event();
-    //     B_SW_Event();
-    //     Y_SW_Event();
-    // }
-  
-    // .4 Run main function
-    // else
-    // {    
-    //     // If the client is connected, set the status to idle.
-    //     if (cilentAlready && cilentAlreadyFirstCycle)
-    //     {
-    //         cilentAlreadyFirstCycle = false;
-    //         setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // red 
-    //     }
-
-    //     // If the client is not connected, set the status to busy.
-    //     else if (!cilentAlready && !cilentAlreadyFirstCycle)
-    //     {
-    //         cilentAlreadyFirstCycle = true;
-    //         setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
-    //     }
-
-    //     // If the packet is received, forced stop the client.
-    //     if (run())  
-    //     {
-    //         client.stop();
-    //         cilentAlready = false;
-    //         cilentAlreadyFirstCycle = false;
-    //         Serial.println(clientInfo + " -> disconnected (force)");
-    //     }
-
-    //     // If the client is connected for too long, force stop the client.
-    //     if (millis() - last_client_connected_time >= 3000 && cilentAlready)
-    //     {
-    //         client.stop();
-    //         cilentAlready = false;
-    //         cilentAlreadyFirstCycle = false;
-    //         Serial.println(clientInfo + " -> disconnected (timeout)");
-    //     }
-    // }
-    
     // // .5 Reset watchdog timer
     // if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
     // {

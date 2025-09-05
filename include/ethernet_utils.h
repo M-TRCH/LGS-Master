@@ -17,7 +17,7 @@
 #define MQTT_CLIENT_ID      "lgs_master"
 #define MQTT_USERNAME       "admin"
 #define MQTT_PASSWORD       "admin"
-#define MQTT_TEST_TOPIC     "test/opta"
+#define MQTT_DEFAULT_TOPIC  "lgs/opta"
 
 // Struct for storing client information
 struct TcpClientInfo 
@@ -46,15 +46,15 @@ struct TcpPacket
 // Packet status codes
 struct PacketStatus 
 {
-    static const int FIRST_SUCCEED    = 1;
-    static const int SECOND_SUCCEED   = 2;
-    static const int NO_ACTION        = 3;
-    static const int IDLE             = 4;
-    static const int BUSY             = 5;
-    static const int FAIL             = 9;
+    static constexpr const int FIRST_SUCCEED    = 1;
+    static constexpr const int SECOND_SUCCEED   = 2;
+    static constexpr const int NO_ACTION        = 3;
+    static constexpr const int IDLE             = 4;
+    static constexpr const int BUSY             = 5;
+    static constexpr const int FAIL             = 9;
 };
 
-// Struct for MQTT client info
+// MQTT client info
 struct MqttClientInfo 
 {
     PubSubClient* client;
@@ -62,12 +62,19 @@ struct MqttClientInfo
     String last_error;
 };
 
+// MQTT message types
+struct MqttMessageType 
+{
+    static constexpr const char* INFO    = "info";
+    static constexpr const char* WARNING = "warning";
+    static constexpr const char* ERROR   = "error";
+};
+
 // tcp server and client instances 
 extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition number per device
 extern EthernetServer tcp_server;
 extern TcpClientInfo tcp_client;
 extern TcpPacket tcp_packet;
-extern PacketStatus packet_status;
 
 // MQTT client instances
 extern EthernetClient eth_client;
@@ -128,9 +135,12 @@ int return_tcp_packet(const TcpPacket& packet);
 bool mqtt_init();
 
 /**
- * @brief Test MQTT connection by publishing a message.
- * @return true if published, false otherwise.
+ * @brief Publish a message to MQTT broker.
+ * @param type Message type: "info", "warning", "error"
+ * @param message Message content
+ * @param topic MQTT topic to publish to (default: MQTT_DEFAULT_TOPIC)
+ * @return true if published successfully, false otherwise.
  */
-bool mqtt_test_publish(const char* msg);
+bool mqtt_publish_json(const char* type, const String message, const char* topic = MQTT_DEFAULT_TOPIC);
 
 #endif

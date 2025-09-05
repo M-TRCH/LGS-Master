@@ -5,7 +5,6 @@ uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for ea
 EthernetServer tcp_server(TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
 TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
-PacketStatus packet_status;
 
 // MQTT client instances
 EthernetClient eth_client;
@@ -260,33 +259,35 @@ bool mqtt_init()
     {
         mqtt_info.connected = true;
         mqtt_info.last_error = "";
-        Serial.println("MQTT: Connected to broker");
+        PRINT(DEBUG_BASIC, "MQTT: Connected to broker\n");
         return true;
     } 
     else 
     {
         mqtt_info.connected = false;
         mqtt_info.last_error = "MQTT: Failed to connect to broker";
-        Serial.println(mqtt_info.last_error);
+        PRINT(DEBUG_BASIC, mqtt_info.last_error);
         return false;
     }
 }
 
-bool mqtt_test_publish(const char* msg)
+bool mqtt_publish_json(const char* type, const String message, const char* topic)
 {
     if (!mqtt_info.connected) 
     {
-        Serial.println("MQTT: Not connected, cannot publish");
+        PRINT(DEBUG_BASIC, "MQTT: Not connected, cannot publish\n");
         return false;
     }
-    bool result = mqtt_client.publish(MQTT_TEST_TOPIC, msg);
+    String json = "{\"type\":\"" + String(type) + "\",\"message\":\"" + message + "\"}";
+    bool result = mqtt_client.publish(topic, json.c_str());
     if (result) 
     {
-        Serial.println("MQTT: Test publish succeeded");
+        PRINT(DEBUG_BASIC, "MQTT: JSON publish succeeded\n");
+        PRINT(DEBUG_VERBOSE, "MQTT: Published to topic " + String(topic) + ": " + json + "\n");
     } 
     else 
     {
-        Serial.println("MQTT: Test publish failed");
+        PRINT(DEBUG_BASIC, "MQTT: JSON publish failed\n");
     }
     return result;
 }
