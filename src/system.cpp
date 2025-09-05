@@ -1,8 +1,6 @@
 
 #include "system.h"
 
-DebugLevel debugLevel = DEBUG_VERBOSE;    // Set debug level (none-basic-verbose)
-
 void system_init(void)
 {
     // pins configuration
@@ -25,15 +23,13 @@ void system_init(void)
     Serial.setTimeout(SERIAL_TIMEOUT);
 
     set_relay(true);
-    
-    PRINT(DEBUG_BASIC, F("Waiting for Module Startup\n"));
+    LOG_INFO_MSG(CAT_SYSTEM, "Waiting for Module Startup");
     uint32_t startupTime = millis();
     while(millis() - startupTime < MODULE_STARTUP_DELAY)
     {
-        PRINT(DEBUG_BASIC, F("."));
         delay(100);
     }
-    PRINT(DEBUG_BASIC, F("\nSystem Initialized\n"));
+    LOG_INFO_MSG(CAT_SYSTEM, "Module Startup Complete");
 }
 
 void set_relay(bool state)

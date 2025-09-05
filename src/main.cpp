@@ -315,8 +315,6 @@ void setup()
 
 void loop() 
 {
-    // panel_switch_debug();
-    
     #ifdef ETHERNET_UTILS_H
         // Update TCP server and manage client connection    
         tcp_server_update();
@@ -333,11 +331,23 @@ void loop()
             // Echo back with FIRST_SUCCEED status.
             tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
             
+            // Publish MQTT message
+            mqtt_publish_json(MqttMessageType::INFO, 
+                "Received packet - Cabinet:" + String(tcp_packet.cabinet) +
+                " Row:" + String(tcp_packet.row) +
+                " Col:" + String(tcp_packet.column) +
+                " Qty:" + String(tcp_packet.quantity) +
+                " Color:" + String(tcp_packet.color) +
+                " Cmd:" + String(tcp_packet.command) +
+                " Status:" + String(tcp_packet.ret_status) +
+                " Trans:" + String(tcp_packet.transition) +
+                " Device:" + String(tcp_packet.device) +
+                " Sum:" + String(tcp_packet.sum));
+
             // Process and respond to the packet
             return_tcp_packet(tcp_packet);
 
-            // Publish MQTT message
-            mqtt_publish_json(MqttMessageType::INFO, "Received TCP packet: transition=" + String(tcp_packet.transition) + ", device=" + String(tcp_packet.device));
+
         }
 
         if (debounce_sw(W_SW_PIN))

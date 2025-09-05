@@ -8,7 +8,7 @@ void config_init()
 {
     // Initialize default device information
     setIPAddress(&device_info, 192, 168, 0, 99);
-    setFirmwareVersion(&device_info, 4, 9, 2025);
+    setFirmwareVersion(&device_info, 5, 9, 2025);
 
     // Print device information
     printDeviceInfo(&device_info);

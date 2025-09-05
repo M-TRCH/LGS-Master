@@ -183,7 +183,7 @@ int return_tcp_packet(const TcpPacket& packet)
         packet.transition < 0 || packet.transition > 99 ||
         packet.device < 0 || packet.device > 9998) 
     {
-        PRINT(DEBUG_BASIC, F("Error: Packet field out of range\n"));
+        LOG_ERROR_MSG(CAT_TCP, "Packet field values out of range");
         return 0;
     }
 
@@ -240,7 +240,10 @@ int return_tcp_packet(const TcpPacket& packet)
     tcp_client.client.println();
 
     // Success
-    PRINT(DEBUG_BASIC, "Packet sent to client: transition=" + String(packet.transition) + ", device=" + String(packet.device) + "\n");
+    LOG_VERBOSE_F(CAT_TCP, "Packet sent to client - Cabinet:%d Row:%d Col:%d Qty:%d Color:%d Cmd:%d Status:%d Trans:%d Device:%d Sum:%d", 
+                packet.cabinet, packet.row, packet.column, packet.quantity, packet.color,
+                packet.command, packet.ret_status, packet.transition, packet.device, calc_sum);
+
     return 1;
 }
 
