@@ -3,6 +3,7 @@
 #include "config.h"
 #include "ethernet_utils.h"
 #include "logger.h"
+#include "lgs_controller.h"
 
 /*
 // (3) Functions
@@ -251,6 +252,11 @@ void setup()
         config_init();
     #endif
 
+    #ifdef LGS_CONTROLLER_H
+        // Initialize LGS controller
+        lgs_init();
+    #endif
+
     #ifdef ETHERNET_UTILS_H
         // Initialize Ethernet and TCP server
         ethernet_init();
@@ -351,11 +357,36 @@ void loop()
 
     if (debounce_sw(R_SW_PIN))
     {
-        for (int i=0; i<60; i++)
+        for (uint8_t row = 1; row <= 8; row++)
         {
-            LOG_INFO_F(CAT_SYSTEM, "Waiting for reset...%d", 60-i);
-            delay(1000);
+            mbed::Watchdog::get_instance().kick();
+
+            for (uint8_t col = 1; col <= 8; col++)
+            {
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red, 1.0, true);                
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green, 1.0, true);
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue, 1.0, true);
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow, 1.0, true);
+            }
+    
         }
+    }
+
+    if (debounce_sw(G_SW_PIN))
+    {
+        for (uint8_t row = 1; row <= 8; row++)
+        {
+            mbed::Watchdog::get_instance().kick();
+            
+            for (uint8_t col = 1; col <= 8; col++)
+            {
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red);                
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green);
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue);
+                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow);
+            }
+    
+        }    
     }
 }
 

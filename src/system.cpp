@@ -21,7 +21,7 @@ void system_init(void)
     pinMode(LED_BUILTIN_1_PIN, OUTPUT);
     pinMode(LED_BUILTIN_2_PIN, OUTPUT);
     pinMode(LED_BUILTIN_3_PIN, OUTPUT);
-
+ 
     // serial configuration
     Serial.begin(SERIAL_BAUD);
     Serial.setTimeout(SERIAL_TIMEOUT);
