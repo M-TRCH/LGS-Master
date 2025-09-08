@@ -5,13 +5,6 @@
 #include "logger.h"
 
 /*
-#define DEV_MODE_TIMEOUT      2000
-#define WATCHDOG_TIMEOUT      30000  // 30 sec
-// .3 Variables
-unsigned long devModeTimer = millis();
-bool devModeActive = false;
-unsigned long kickWatchdogTimer = millis();
-
 // (3) Functions
 void RESET_Event(unsigned long preResetTime = 3000, unsigned long postResetTime = 1000)
 {
@@ -304,17 +297,27 @@ void setup()
     //     #endif
     // #endif
  
-    // // .6 Second start up 
-    // if (!devModeActive) 
-    // {
-    //     setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  // green
-    //     // Enable watchdog timer
-    //     mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
-    // }
+    // Start watchdog if not in dev mode
+    if (dev_mode_activated) 
+    {
+
+    }
+    else 
+    {
+        mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
+    }
 }
 
 void loop() 
 {
+    #ifdef SYSTEM_H
+        if (millis() - kick_watchdog_timer >= WATCHDOG_FEED_INTERVAL)
+        {
+            kick_watchdog_timer = millis();
+            mbed::Watchdog::get_instance().kick();
+        }
+    #endif
+
     #ifdef ETHERNET_UTILS_H
         // Update TCP server and manage client connection    
         tcp_server_update();
@@ -346,13 +349,13 @@ void loop()
         NVIC_SystemReset();
     }
 
-
-
-    // Reset watchdog timer
-    // if (millis() - kickWatchdogTimer >= WATCHDOG_TIMEOUT / 4)
-    // {
-    //     kickWatchdogTimer = millis();
-    //     mbed::Watchdog::get_instance().kick();
-    // }
+    if (debounce_sw(R_SW_PIN))
+    {
+        for (int i=0; i<60; i++)
+        {
+            LOG_INFO_F(CAT_SYSTEM, "Waiting for reset...%d", 60-i);
+            delay(1000);
+        }
+    }
 }
 

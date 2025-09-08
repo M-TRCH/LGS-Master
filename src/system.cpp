@@ -1,6 +1,10 @@
 
 #include "system.h"
 
+uint32_t kick_watchdog_timer = 0;
+uint32_t dev_mode_timer = 0;
+bool dev_mode_activated = false;
+
 void system_init(void)
 {
     // pins configuration

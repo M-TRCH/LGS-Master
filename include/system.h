@@ -25,6 +25,14 @@
 #define RS485_BAUD              9600
 #define RS485_TIMEOUT           50
 #define MODULE_STARTUP_DELAY    5000
+#define DEV_MODE_ACTIVATE_TIME  2000
+#define WATCHDOG_TIMEOUT        30000                   // 30 sec
+#define WATCHDOG_FEED_INTERVAL  (WATCHDOG_TIMEOUT / 4)  // feed every quarter timeout
+
+// global variables
+extern uint32_t kick_watchdog_timer;
+extern uint32_t dev_mode_timer;
+extern bool dev_mode_activated;
 
 /* @brief Initialize system: pins, serial communication, and config
  */
