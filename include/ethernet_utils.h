@@ -152,4 +152,13 @@ void mqtt_update();
  */
 bool mqtt_publish_json(const char* type, const String& message, const char* topic = MQTT_DEFAULT_TOPIC);
 
+/**
+ * @brief Publish TCP packet details to MQTT broker in JSON format.
+ * @param packet Reference to TcpPacket struct to publish.
+ * @param type Message type (use MqttMessageType constants)
+ * @param prefix Optional prefix to add to the message content
+ * @return true if published successfully, false otherwise.
+ */
+bool publish_tcp_packet(const TcpPacket& packet, const char* type, const String& prefix);
+
 #endif

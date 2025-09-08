@@ -328,3 +328,20 @@ bool mqtt_publish_json(const char* type, const String& message, const char* topi
     }
     return result;
 }
+
+bool publish_tcp_packet(const TcpPacket& packet, const char* type, const String& prefix)
+{
+    String msg = prefix +
+        "Cabinet:" + String(packet.cabinet) +
+        " Row:" + String(packet.row) +
+        " Col:" + String(packet.column) +
+        " Qty:" + String(packet.quantity) +
+        " Color:" + String(packet.color) +
+        " Cmd:" + String(packet.command) +
+        " Status:" + String(packet.ret_status) +
+        " Trans:" + String(packet.transition) +
+        " Device:" + String(packet.device) +
+        " Sum:" + String(packet.sum);
+
+    return mqtt_publish_json(type, msg);
+}

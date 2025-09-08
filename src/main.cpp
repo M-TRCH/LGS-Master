@@ -326,18 +326,8 @@ void loop()
         if (receive_tcp_packet(tcp_packet))
         {
             // Log received packet details
-            mqtt_publish_json(MqttMessageType::INFO, 
-                "Received packet - Cabinet:" + String(tcp_packet.cabinet) +
-                " Row:" + String(tcp_packet.row) +
-                " Col:" + String(tcp_packet.column) +
-                " Qty:" + String(tcp_packet.quantity) +
-                " Color:" + String(tcp_packet.color) +
-                " Cmd:" + String(tcp_packet.command) +
-                " Status:" + String(tcp_packet.ret_status) +
-                " Trans:" + String(tcp_packet.transition) +
-                " Device:" + String(tcp_packet.device) +
-                " Sum:" + String(tcp_packet.sum));
-
+            publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Received packet - "));
+        
             // Echo back with FIRST_SUCCEED status.
             tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
             
@@ -346,17 +336,7 @@ void loop()
             if (success)
             {
                 // Log sent packet details
-                mqtt_publish_json(MqttMessageType::INFO, 
-                    "Sent packet - Cabinet:" + String(tcp_packet.cabinet) +
-                    " Row:" + String(tcp_packet.row) +
-                    " Col:" + String(tcp_packet.column) +
-                    " Qty:" + String(tcp_packet.quantity) +
-                    " Color:" + String(tcp_packet.color) +
-                    " Cmd:" + String(tcp_packet.command) +
-                    " Status:" + String(tcp_packet.ret_status) +
-                    " Trans:" + String(tcp_packet.transition) +
-                    " Device:" + String(tcp_packet.device) +
-                    " Sum:" + String(tcp_packet.sum));
+                publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Sent packet - "));
             }
         }
     #endif
