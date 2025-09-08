@@ -3,12 +3,13 @@
 
 // Global variable to store device information
 DeviceInfo_t device_info;
+ModuleType device_type;
 
-void config_init()
+void config_init(ModuleType type, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4, uint8_t day, uint8_t month, uint16_t year)
 {
-    // Initialize default device information
-    setIPAddress(&device_info, 192, 168, 0, 99);
-    setFirmwareVersion(&device_info, 8, 9, 2025);
+    device_type = type;
+    setIPAddress(&device_info, ip1, ip2, ip3, ip4);
+    setFirmwareVersion(&device_info, day, month, year);
 
     // Print device information
     printDeviceInfo(&device_info);

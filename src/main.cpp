@@ -248,8 +248,10 @@ void setup()
     #endif
 
     #ifdef CONFIG_H
-        // Initialize configuration such as ip address
-        config_init();
+        // Initialize configuration with module type, IP address, and firmware version
+        config_init(ModuleType::STANDARD, 
+            192, 168, 0, 99, 
+            8, 9, 2025);
     #endif
 
     #ifdef LGS_CONTROLLER_H
@@ -292,17 +294,6 @@ void setup()
     //     }
     // }
   
-    // // .5 Test functions
-    // #ifdef TEST_FUNCTION
-    //     #ifdef LGS_STANDARD
-    //         std_moduleCheck();
-    //     #endif 
-    //     #ifdef LGS_NARCOTIC
-    //         // nct_moduleCheck();
-    //         nct_allUnlock();
-    //     #endif
-    // #endif
- 
     // Start watchdog if not in dev mode
     if (dev_mode_activated) 
     {
@@ -363,12 +354,17 @@ void loop()
 
             for (uint8_t col = 1; col <= 8; col++)
             {
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red, 1.0, true);                
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green, 1.0, true);
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue, 1.0, true);
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow, 1.0, true);
+                bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red, 1.0, true);
+                bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green, 1.0, true);
+                bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue, 1.0, true);
+                bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow, 1.0, true);
+                LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
+                    row, col, 
+                    red_success ? "Success" : "Fail", 
+                    green_success ? "Success" : "Fail", 
+                    blue_success ? "Success" : "Fail", 
+                    yellow_success ? "Success" : "Fail");
             }
-    
         }
     }
 
@@ -380,12 +376,17 @@ void loop()
             
             for (uint8_t col = 1; col <= 8; col++)
             {
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red);                
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green);
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue);
-                set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow);
+                bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red);
+                bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green);
+                bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue);
+                bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow);
+                LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
+                    row, col, 
+                    red_success ? "Success" : "Fail", 
+                    green_success ? "Success" : "Fail", 
+                    blue_success ? "Success" : "Fail", 
+                    yellow_success ? "Success" : "Fail");
             }
-    
         }    
     }
 }

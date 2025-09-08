@@ -5,9 +5,28 @@
 #include <Arduino.h>
 #include "system.h"
 
-/* @brief Initialize configuration settings
-*/
-void config_init();
+// Module type enumeration
+enum class ModuleType 
+{
+    STANDARD,   // Standard module (row 1-8)
+    NARCOTIC    // Narcotic module (row 0-9)
+};
+
+extern ModuleType device_type;
+
+/* @brief Initialize device configuration
+ * @param type Module type (STANDARD or NARCOTIC)
+ * @param ip1 First octet of the IP address
+ * @param ip2 Second octet of the IP address
+ * @param ip3 Third octet of the IP address
+ * @param ip4 Fourth octet of the IP address
+ * @param day Day of the firmware version (1-31)
+ * @param month Month of the firmware version (1-12)
+ * @param year Year of the firmware version (e.g. 2025)
+ */
+void config_init(ModuleType type, 
+                 uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4, 
+                 uint8_t day, uint8_t month, uint16_t year);
 
 // Struct for storing IP address
 struct IPAddress_t 

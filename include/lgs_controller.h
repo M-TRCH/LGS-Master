@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "LGSBus.h"
 #include "system.h"
+#include "config.h"
 #include "logger.h"
 
 // LGS command address (Refer to Documentation)
@@ -55,13 +56,6 @@ struct ModuleAddress
         if (row != -1 && col != -1) return row * 10 + col;
         return -1; // Invalid address
     }
-};
-
-// Module type enumeration
-enum class ModuleType 
-{
-    STANDARD,   // Standard module (row 1-8)
-    NARCOTIC    // Narcotic module (row 0-9)
 };
 
 extern LGSbus lgs;
