@@ -10,8 +10,20 @@ ModuleColor cl_white(255, 255, 255);
 
 void lgs_init()
 {
-  lgs.begin(lgs.ID_MASTER, &RS485, RS485_BAUD, RS485_TIMEOUT);
-  RS485.receive();
+    // Initialize RS485 communication for LGS bus
+    lgs.begin(lgs.ID_MASTER, &RS485, RS485_BAUD, RS485_TIMEOUT);
+    RS485.receive();    
+
+    // If in developer mode, cycle through colors on the panel display
+    if (dev_mode_activated)
+    {
+        set_info(cl_red, device_info);      delay(800);
+        set_info(cl_green, device_info);    delay(800);
+        set_info(cl_blue, device_info);     delay(800);
+        set_info(cl_yellow, device_info);   delay(800);
+        set_info(cl_white, device_info);    delay(800);
+        set_info(cl_clear, device_info);  
+    }   
 }
 
 bool set_info(const ModuleColor& color, const DeviceInfo_t& info)
@@ -84,4 +96,77 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
         return lgs.write(module_id, cmd_addr_num, cmd_addr, cmd_send_timeout, cmd_send_retries);
     }
     return true;
+}
+
+void red_button_event()
+{
+    if (debounce_sw(R_SW_PIN))
+    {
+        set_info(cl_red, device_info);  // Indicate config mode with red LED
+
+        if (device_type == ModuleType::STANDARD)
+        {
+            for (uint8_t row = 1; row <= 8; row++)
+            {
+                mbed::Watchdog::get_instance().kick();
+
+                for (uint8_t col = 1; col <= 8; col++)
+                {
+                    bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red, 1.0, true);
+                    bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green, 1.0, true);
+                    bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue, 1.0, true);
+                    bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow, 1.0, true);
+                    LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
+                        row, col, 
+                        red_success ? "Success" : "Fail", 
+                        green_success ? "Success" : "Fail", 
+                        blue_success ? "Success" : "Fail", 
+                        yellow_success ? "Success" : "Fail");
+                }
+            }
+        }
+
+        else if (device_type == ModuleType::NARCOTIC)
+        {
+           
+        }
+
+        set_info(cl_clear, device_info); // Clear LED after config
+    }    
+}
+
+void green_button_event()
+{
+    if (debounce_sw(G_SW_PIN))
+    {   
+        set_info(cl_green, device_info);  // Indicate config mode with green LED
+
+        if (device_type == ModuleType::STANDARD)
+        {
+            for (uint8_t row = 1; row <= 8; row++)
+            {
+                mbed::Watchdog::get_instance().kick();
+                
+                for (uint8_t col = 1; col <= 8; col++)
+                {
+                    bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red);
+                    bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green);
+                    bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue);
+                    bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow);
+                    LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
+                        row, col, 
+                        red_success ? "Success" : "Fail", 
+                        green_success ? "Success" : "Fail", 
+                        blue_success ? "Success" : "Fail", 
+                        yellow_success ? "Success" : "Fail");
+                }
+            }
+        }
+        else if (device_type == ModuleType::NARCOTIC)
+        {
+
+        }
+
+        set_info(cl_clear, device_info); // Clear LED after config
+    }
 }

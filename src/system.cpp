@@ -2,8 +2,7 @@
 #include "system.h"
 
 uint32_t kick_watchdog_timer = 0;
-uint32_t dev_mode_timer = 0;
-bool dev_mode_activated = false;
+bool dev_mode_activated = true;
 
 void system_init(void)
 {
@@ -21,7 +20,7 @@ void system_init(void)
     pinMode(LED_BUILTIN_1_PIN, OUTPUT);
     pinMode(LED_BUILTIN_2_PIN, OUTPUT);
     pinMode(LED_BUILTIN_3_PIN, OUTPUT);
- 
+    
     // serial configuration
     Serial.begin(SERIAL_BAUD);
     Serial.setTimeout(SERIAL_TIMEOUT);
@@ -31,6 +30,11 @@ void system_init(void)
     uint32_t startupTime = millis();
     while(millis() - startupTime < MODULE_STARTUP_DELAY)
     {
+        // Check for developer mode activation
+        if (!digitalRead(R_SW_PIN) && !digitalRead(G_SW_PIN) && !digitalRead(B_SW_PIN) && !digitalRead(Y_SW_PIN))
+        {
+            dev_mode_activated = false;
+        }
         delay(100);
     }
     LOG_INFO_MSG(CAT_SYSTEM, "Module Startup Complete");

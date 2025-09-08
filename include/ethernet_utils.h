@@ -4,7 +4,6 @@
 #include <Ethernet.h>
 #include <PubSubClient.h>
 #include "system.h"
-#include "config.h"
 
 // tcp server settings
 #define TCP_SERVER_PORT     2000

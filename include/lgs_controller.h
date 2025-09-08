@@ -4,8 +4,6 @@
 #include <Arduino.h>
 #include "LGSBus.h"
 #include "system.h"
-#include "config.h"
-#include "logger.h"
 
 // LGS command address (Refer to Documentation)
 struct LGSAddress 
@@ -86,5 +84,15 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info);
  * @param state true to turn on, false to turn off
  */
 bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false);
+
+/*  
+ * @brief Handle red button press event
+ */
+void red_button_event();
+
+/*  
+ * @brief Handle green button press event
+ */
+void green_button_event();
 
 #endif  /* LGS_CONTROLLER_H */
