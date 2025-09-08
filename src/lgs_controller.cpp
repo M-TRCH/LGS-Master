@@ -14,6 +14,30 @@ void lgs_init()
   RS485.receive();
 }
 
+bool set_info(const ModuleColor& color, const DeviceInfo_t& info)
+{
+    const uint8_t cmd_id = 99;              // Set 99 as the panel display ID
+    const uint8_t cmd_addr_num = 5;         // Number of command address to write
+    const uint8_t cmd_send_timeout = 50;    // Timeout for command send
+    const uint8_t cmd_send_retries = 2;     // Number of retries for command send
+    uint8_t color_code = 0;                 // Color code for LED indicator
+    
+    if (color.r == 255 && color.g == 0 && color.b == 0)         color_code = 1; // Red
+    else if (color.r == 0 && color.g == 255 && color.b == 0)    color_code = 2; // Green
+    else if (color.r == 0 && color.g == 0 && color.b == 255)    color_code = 3; // Blue
+    else if (color.r == 255 && color.g == 145 && color.b == 0)  color_code = 4; // Yellow
+    else if (color.r == 255 && color.g == 255 && color.b == 255)color_code = 5; // White
+    else                                                        color_code = 0; // Off/Unknown
+
+    // Send device information to the panel display
+    lgs.writeData(LGSAddress::GREET, 0, color_code);
+    lgs.writeData(LGSAddress::GREET, 1, 0); // Unused   
+    lgs.writeData(LGSAddress::GREET, 2, device_info.firmware_version.day);
+    lgs.writeData(LGSAddress::GREET, 3, device_info.firmware_version.month);
+    lgs.writeData(LGSAddress::GREET, 4, device_info.firmware_version.year % 100); // Last two digits of year
+    return lgs.write(cmd_id, cmd_addr_num, LGSAddress::GREET, cmd_send_timeout, cmd_send_retries);
+}
+
 bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness, bool state)
 {
     // Validate brightness range

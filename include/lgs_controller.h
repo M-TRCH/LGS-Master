@@ -72,6 +72,14 @@ extern ModuleColor cl_white;
 void lgs_init();
 
 /**
+ * @brief Set device information (color indicator and firmware version)
+ * @param color ModuleColor for LED indicator
+ * @param info DeviceInfo_t containing IP address and firmware version
+ * @return true if successful, false otherwise
+ */
+bool set_info(const ModuleColor& color, const DeviceInfo_t& info);
+
+/**
  * @brief Set color for a module using ModuleInfo
  * @param info ModuleInfo containing type and address
  * @param color ModuleColor containing RGB values

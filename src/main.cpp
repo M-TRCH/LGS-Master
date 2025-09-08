@@ -5,6 +5,85 @@
 #include "logger.h"
 #include "lgs_controller.h"
 
+/*  
+ * @brief Handle red button press event
+ */
+void red_button_event()
+{
+    if (debounce_sw(R_SW_PIN))
+    {
+        set_info(cl_red, device_info);  // Indicate config mode with red LED
+
+        if (device_type == ModuleType::STANDARD)
+        {
+            for (uint8_t row = 1; row <= 8; row++)
+            {
+                mbed::Watchdog::get_instance().kick();
+
+                for (uint8_t col = 1; col <= 8; col++)
+                {
+                    bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red, 1.0, true);
+                    bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green, 1.0, true);
+                    bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue, 1.0, true);
+                    bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow, 1.0, true);
+                    LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
+                        row, col, 
+                        red_success ? "Success" : "Fail", 
+                        green_success ? "Success" : "Fail", 
+                        blue_success ? "Success" : "Fail", 
+                        yellow_success ? "Success" : "Fail");
+                }
+            }
+        }
+
+        else if (device_type == ModuleType::NARCOTIC)
+        {
+           
+        }
+
+        set_info(cl_clear, device_info); // Clear LED after config
+    }    
+}
+
+/*  
+ * @brief Handle green button press event
+ */
+void green_button_event()
+{
+    if (debounce_sw(G_SW_PIN))
+    {   
+        set_info(cl_green, device_info);  // Indicate config mode with green LED
+
+        if (device_type == ModuleType::STANDARD)
+        {
+            for (uint8_t row = 1; row <= 8; row++)
+            {
+                mbed::Watchdog::get_instance().kick();
+                
+                for (uint8_t col = 1; col <= 8; col++)
+                {
+                    bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red);
+                    bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green);
+                    bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue);
+                    bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow);
+                    LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
+                        row, col, 
+                        red_success ? "Success" : "Fail", 
+                        green_success ? "Success" : "Fail", 
+                        blue_success ? "Success" : "Fail", 
+                        yellow_success ? "Success" : "Fail");
+                }
+            }
+        }
+        else if (device_type == ModuleType::NARCOTIC)
+        {
+
+        }
+
+        set_info(cl_clear, device_info); // Clear LED after config
+    }
+}
+
 /*
 // (3) Functions
 void RESET_Event(unsigned long preResetTime = 3000, unsigned long postResetTime = 1000)
@@ -270,30 +349,6 @@ void setup()
         mqtt_init();
     #endif
 
-    // // .2 Subsystem initialize
-    // #ifdef LGS_MASTER_H
-    //     commu_init();
-    // #endif
-
-    // // .4 Development mode
-    // devModeTimer = millis();
-    // while (W_SW || R_SW || G_SW || B_SW || Y_SW)
-    // {
-    //     delay(10);
-    //     if (millis()-devModeTimer >= DEV_MODE_TIMEOUT)
-    //     {
-    //         devModeActive = true;
-    //         setInfo(1, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // red
-    //         setInfo(2, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // green
-    //         setInfo(3, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // blue
-    //         setInfo(4, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // yellow
-    //         setInfo(5, 0, VERSION_DD, VERSION_MM, VERSION_YY);  delay(1000);  // white
-    //         setInfo(0, 0, VERSION_DD, VERSION_MM, VERSION_YY);  
-    //         Serial.println("Opta/status: develop mode");
-    //         break;   
-    //     }
-    // }
-  
     // Start watchdog if not in dev mode
     if (dev_mode_activated) 
     {
@@ -308,11 +363,15 @@ void setup()
 void loop() 
 {
     #ifdef SYSTEM_H
+        // Kick watchdog periodically
         if (millis() - kick_watchdog_timer >= WATCHDOG_FEED_INTERVAL)
         {
             kick_watchdog_timer = millis();
             mbed::Watchdog::get_instance().kick();
         }
+
+        red_button_event();
+        green_button_event();
     #endif
 
     #ifdef ETHERNET_UTILS_H
@@ -344,50 +403,6 @@ void loop()
     if (debounce_sw(W_SW_PIN))
     {
         NVIC_SystemReset();
-    }
-
-    if (debounce_sw(R_SW_PIN))
-    {
-        for (uint8_t row = 1; row <= 8; row++)
-        {
-            mbed::Watchdog::get_instance().kick();
-
-            for (uint8_t col = 1; col <= 8; col++)
-            {
-                bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red, 1.0, true);
-                bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green, 1.0, true);
-                bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue, 1.0, true);
-                bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow, 1.0, true);
-                LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
-                    row, col, 
-                    red_success ? "Success" : "Fail", 
-                    green_success ? "Success" : "Fail", 
-                    blue_success ? "Success" : "Fail", 
-                    yellow_success ? "Success" : "Fail");
-            }
-        }
-    }
-
-    if (debounce_sw(G_SW_PIN))
-    {
-        for (uint8_t row = 1; row <= 8; row++)
-        {
-            mbed::Watchdog::get_instance().kick();
-            
-            for (uint8_t col = 1; col <= 8; col++)
-            {
-                bool red_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_red);
-                bool green_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_green);
-                bool blue_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_blue);
-                bool yellow_success = set_color(ModuleType::STANDARD, ModuleAddress(row, col), cl_yellow);
-                LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: R=%s, G=%s, B=%s, Y=%s", 
-                    row, col, 
-                    red_success ? "Success" : "Fail", 
-                    green_success ? "Success" : "Fail", 
-                    blue_success ? "Success" : "Fail", 
-                    yellow_success ? "Success" : "Fail");
-            }
-        }    
     }
 }
 
