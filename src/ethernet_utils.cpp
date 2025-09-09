@@ -8,6 +8,7 @@ uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for ea
 EthernetServer tcp_server(TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
 TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
+TcpIndicatorState_t tcp_indicator_state = TCP_INDICATOR_WAITING;
 
 // MQTT client instances
 EthernetClient eth_client;
@@ -76,8 +77,9 @@ void tcp_server_update()
         tcp_client.client = new_client;
         tcp_client.connected = true;
         tcp_client.info = "Client connected: " + new_client.remoteIP().toString() + ":" + String(new_client.remotePort());
-        LOG_INFO_MSG(CAT_TCP, tcp_client.info);
         tcp_client.last_active_time = millis();
+        tcp_indicator_state = TCP_INDICATOR_CONNECTED;
+        LOG_INFO_MSG(CAT_TCP, tcp_client.info);
     }
 
     if (tcp_client.client) 
@@ -88,6 +90,7 @@ void tcp_server_update()
             tcp_client.client.stop();
             tcp_client.connected = false;
             tcp_client.info = "Client disconnected (lost connection)";
+            tcp_indicator_state = TCP_INDICATOR_WAITING;
             LOG_INFO_MSG(CAT_TCP, tcp_client.info);
         }
         // If client is connected but inactive for too long, disconnect
@@ -96,6 +99,7 @@ void tcp_server_update()
             tcp_client.client.stop();
             tcp_client.connected = false;
             tcp_client.info = "Client disconnected (timeout)";
+            tcp_indicator_state = TCP_INDICATOR_WAITING;
             LOG_WARN_MSG(CAT_TCP, tcp_client.info);
         }
         // If client sent any data, reset timeout

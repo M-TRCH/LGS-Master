@@ -80,6 +80,7 @@ extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition numbe
 extern EthernetServer tcp_server;
 extern TcpClientInfo tcp_client;
 extern TcpPacket tcp_packet;
+extern TcpIndicatorState_t tcp_indicator_state;
 
 // MQTT client instances
 extern EthernetClient eth_client;

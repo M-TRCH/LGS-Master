@@ -30,6 +30,16 @@
 #define WATCHDOG_TIMEOUT        30000                   // 30 sec
 #define WATCHDOG_FEED_INTERVAL  (WATCHDOG_TIMEOUT / 4)  // feed every quarter timeout
 
+// TCP indicator states
+typedef enum 
+{
+    TCP_INDICATOR_NONE = 0,
+    TCP_INDICATOR_IDLE,
+    TCP_INDICATOR_WAITING,
+    TCP_INDICATOR_CONNECTED,
+    TCP_INDICATOR_ERROR 
+} TcpIndicatorState_t;
+
 // global variables
 extern uint32_t kick_watchdog_timer;
 extern bool dev_mode_activated;

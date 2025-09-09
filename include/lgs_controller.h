@@ -105,4 +105,19 @@ void red_button_event();
  */
 void green_button_event();
 
+/*  
+ * @brief Handle blue button press event
+ */
+void blue_button_event();
+
+/*  
+ * @brief Handle yellow button press event
+ */
+void yellow_button_event();
+
+/*  
+ * @brief Update TCP indicator LED based on connection state
+ */
+void tcp_indicator_update(TcpIndicatorState_t state);
+
 #endif  /* LGS_CONTROLLER_H */

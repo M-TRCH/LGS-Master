@@ -30,16 +30,16 @@ void setup()
 #ifdef ETHERNET_UTILS_H
     if (!dev_mode_activated)
     {   
-        // Indicate network initialization with white LED
-        set_info(cl_yellow, device_info);
+        // Set TCP indicator to idle initially
+        tcp_indicator_update(TCP_INDICATOR_IDLE);
 
         // Initialize Ethernet and TCP server
         ethernet_init();
 
         if (ethernet_not_linked)
-        {
-            // If Ethernet cable is not connected, indicate with blue LED
-            set_info(cl_blue, device_info);
+        {   
+            // Indicate error if Ethernet cable is not connected
+            tcp_indicator_update(TCP_INDICATOR_ERROR); 
         }
         else
         {
@@ -49,8 +49,8 @@ void setup()
             // Initialize MQTT connection
             mqtt_init();
 
-            // Indicate successful network connection with green LED
-            set_info(cl_green, device_info);
+            // Indicate waiting for client connection
+            tcp_indicator_update(TCP_INDICATOR_WAITING); 
         }
     }
 #endif
@@ -74,6 +74,8 @@ void loop()
     {
         red_button_event();
         green_button_event();
+        blue_button_event();
+        yellow_button_event();
     }
 
     // Always check for white button event to exit dev mode
@@ -85,7 +87,10 @@ void loop()
     {
         // Update TCP server and manage client connection    
         tcp_server_update();
-        
+
+        // Update TCP indicator LED based on connection state
+        tcp_indicator_update(tcp_indicator_state);
+
         // Update MQTT connection
         mqtt_update();
 
