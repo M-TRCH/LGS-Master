@@ -5,13 +5,6 @@
 #include "LGSBus.h"
 #include "system.h"
 
-typedef enum LGSTCPCommand
-{
-    CMD_ON = 0,
-    CMD_OFF,
-    CMD_RETURN
-} LGSTCPCommand_t;
-
 // LGS command address (Refer to Documentation)
 struct LGSAddress 
 {

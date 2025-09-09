@@ -13,7 +13,7 @@ void setup()
 
 #ifdef LOGGER_H
     // Initialize logging system first
-    logger_init(LOG_VERBOSE);
+    logger_init(LOG_INFO);
 #endif
 
 #ifdef SYSTEM_H
@@ -96,15 +96,21 @@ void loop()
             // Log received packet details
             publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Received packet - "));
         
-            // Echo back with FIRST_SUCCEED status.
-            tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
-            
             // Process and respond to the packet
-            bool success = return_tcp_packet(tcp_packet);
-            if (success)
+            if (return_tcp_packet(tcp_packet))
             {
                 // Log sent packet details
-                publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Sent packet - "));
+                publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Sent first packet - "));
+            }
+
+            // Execute command from the packet
+            if (tcp_command_execute(tcp_packet))
+            {
+                if (return_tcp_packet(tcp_packet))
+                {
+                    // Log sent packet details
+                    publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Sent second packet - "));
+                }
             }
         }
     }

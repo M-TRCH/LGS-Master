@@ -28,7 +28,75 @@ void tcp_indicator_update(TcpIndicatorState_t state)
     }
 }
 
-void tcp_command_execute(const LGSTCPCommand_t cmd, const int color, const int quantity)
+bool tcp_command_execute(const TcpPacket packet)
 {
-   
+    if (device_type == ModuleType::STANDARD)
+    {
+        // Validate row and column
+        if (packet.row < 1 || packet.row > 8 || packet.column < 1 || packet.column > 8)
+        {
+            LOG_ERROR_F(CAT_LGS, "Invalid row/column for standard module: row=%d, col=%d", packet.row, packet.column);
+            return false; // Invalid row/column for standard module
+        }
+
+        // Validate color
+        if (packet.color < 1 || packet.color > 4)
+        {
+            LOG_ERROR_F(CAT_LGS, "Invalid color for standard module: color=%d", packet.color);
+            return false; // Invalid color
+        }
+
+        // Convert to LGS addressing (row 1-8 to 8-1)
+        ModuleAddress addr(9 - packet.row, packet.column);
+        
+        // Determine color
+        ModuleColor color;
+        if (packet.color == 1)         color = cl_red;
+        else if (packet.color == 2)    color = cl_green;
+        else if (packet.color == 3)    color = cl_blue;
+        else if (packet.color == 4)    color = cl_yellow;
+        
+        // Execute command
+        switch (packet.command)
+        {
+            case CMD_ON:
+                if (set_color(ModuleType::STANDARD, addr, color, 1.0, true))
+                {
+                    tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
+                    LOG_INFO_F(CAT_LGS, "CMD_ON executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                }
+                else
+                {
+                    tcp_packet.ret_status = PacketStatus::FAIL;  
+                    LOG_ERROR_F(CAT_LGS, "CMD_ON failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                }
+                return_tcp_packet(tcp_packet);
+                break;
+
+            case CMD_OFF:
+                if (set_color(ModuleType::STANDARD, addr, color, 1.0, false))
+                {
+                    tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
+                    LOG_INFO_F(CAT_LGS, "CMD_OFF executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                }
+                else
+                {
+                    tcp_packet.ret_status = PacketStatus::FAIL;  
+                    LOG_ERROR_F(CAT_LGS, "CMD_OFF failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                }
+                break;
+
+            case CMD_RETURN:
+                // Handle CMD_RETURN
+                break;
+
+            default:
+                return false; // Unknown command
+        }
+    }
+    else if (device_type == ModuleType::NARCOTIC)
+    {
+        // Handle narcotic module commands
+    }
+    return true;   
 }

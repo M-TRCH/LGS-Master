@@ -16,6 +16,15 @@ typedef enum
     TCP_INDICATOR_ERROR 
 } TcpIndicatorState_t;
 
+// TCP command types
+typedef enum LGSTCPCommand
+{
+    CMD_OFF = 0,
+    CMD_ON,
+    CMD_RETURN
+} LGSTCPCommand_t;
+
+
 /*  
  * @brief Update TCP indicator LED based on connection state
  */
@@ -23,10 +32,9 @@ void tcp_indicator_update(TcpIndicatorState_t state);
 
 /*  
  * @brief Execute TCP command to control modules
- * @param cmd LGSTCPCommand_t command (CMD_ON, CMD_OFF, CMD_RETURN)
- * @param color Color code (1=Red, 2=Green, 3=Blue, 4=Yellow)
- * @param quantity Quantity for CMD_ON/CMD_OFF, ignored for CMD_RETURN
+ * @param packet tcp_packet containing command details
+ * @return true if command executed successfully, false otherwise
  */
-void tcp_command_execute(const LGSTCPCommand_t cmd, const int color, const int quantity);
+bool tcp_command_execute(const TcpPacket packet);
 
 #endif /* TCP_LGS_BRIDGE_H */  

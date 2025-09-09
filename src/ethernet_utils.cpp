@@ -174,6 +174,9 @@ int receive_tcp_packet(TcpPacket &packet)
     // Update transition number for this device
     transition_numbers[packet.device] = packet.transition;
 
+    // Update return status as FIRST_SUCCEED.
+    tcp_packet.ret_status = PacketStatus::FIRST_SUCCEED;    
+            
     // Debug print packet details
     LOG_VERBOSE_F(CAT_TCP, "Packet received - Cabinet:%d Row:%d Col:%d Qty:%d Color:%d Cmd:%d Status:%d Trans:%d Device:%d Sum:%d", 
                   packet.cabinet, packet.row, packet.column, packet.quantity, packet.color,
