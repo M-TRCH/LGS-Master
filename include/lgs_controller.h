@@ -86,6 +86,16 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info);
 bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false);
 
 /*  
+ * @brief Perform a soft reset of the system with LED indication
+ */
+void soft_reset(bool indicate=true);
+
+/*  
+ * @brief Handle white button press event
+ */
+void white_button_event();
+
+/*  
  * @brief Handle red button press event
  */
 void red_button_event();

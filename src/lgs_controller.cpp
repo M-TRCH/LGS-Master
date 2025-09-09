@@ -98,6 +98,29 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
     return true;
 }
 
+void soft_reset(bool indicate)
+{
+    if (indicate)
+    {
+        // Indicate reset with white LED
+        set_info(cl_white, device_info);
+        delay(2000);
+        set_info(cl_clear, device_info);
+        delay(500);
+    }
+    set_relay(false);  // Turn off relay
+    delay(500);    
+    NVIC_SystemReset();
+}
+
+void white_button_event()
+{
+    if (debounce_sw(W_SW_PIN))
+    {
+        soft_reset();   // Perform soft reset with LED indication
+    }
+}
+
 void red_button_event()
 {
     if (debounce_sw(R_SW_PIN))

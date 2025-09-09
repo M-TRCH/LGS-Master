@@ -76,11 +76,8 @@ void loop()
         green_button_event();
     }
 
-    // Check for system reset command
-    if (debounce_sw(W_SW_PIN))
-    {
-        NVIC_SystemReset();
-    }
+    // Always check for white button event to exit dev mode
+    white_button_event();
 #endif
 
 #ifdef ETHERNET_UTILS_H
