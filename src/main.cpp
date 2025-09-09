@@ -1,7 +1,6 @@
 
 #include "system.h"
-#include "ethernet_utils.h"
-#include "lgs_controller.h"
+#include "tcp_lgs_bridge.h"
 
 void setup() 
 {
@@ -85,11 +84,8 @@ void loop()
 #ifdef ETHERNET_UTILS_H
     if (!dev_mode_activated && !ethernet_not_linked)
     {
-        // Update TCP server and manage client connection    
-        tcp_server_update();
-
-        // Update TCP indicator LED based on connection state
-        tcp_indicator_update(tcp_indicator_state);
+        // Update TCP server and indicator state
+        tcp_server_update() ? tcp_indicator_update(TCP_INDICATOR_CONNECTED) : tcp_indicator_update(TCP_INDICATOR_WAITING);
 
         // Update MQTT connection
         mqtt_update();

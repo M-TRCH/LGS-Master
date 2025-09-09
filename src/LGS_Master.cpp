@@ -2,6 +2,9 @@
 #include "LGS_Master.h"
 #include "logger.h"
 
+//--------------- This files is Deprecated ---------------
+// Use lgs_controller.h and lgs_controller.cpp instead
+
 LGSbus bus;
 
 void commu_init()

@@ -5,6 +5,13 @@
 #include "LGSBus.h"
 #include "system.h"
 
+typedef enum LGSTCPCommand
+{
+    CMD_ON = 0,
+    CMD_OFF,
+    CMD_RETURN
+} LGSTCPCommand_t;
+
 // LGS command address (Refer to Documentation)
 struct LGSAddress 
 {
@@ -114,10 +121,5 @@ void blue_button_event();
  * @brief Handle yellow button press event
  */
 void yellow_button_event();
-
-/*  
- * @brief Update TCP indicator LED based on connection state
- */
-void tcp_indicator_update(TcpIndicatorState_t state);
 
 #endif  /* LGS_CONTROLLER_H */

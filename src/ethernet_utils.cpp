@@ -8,7 +8,6 @@ uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for ea
 EthernetServer tcp_server(TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
 TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
-TcpIndicatorState_t tcp_indicator_state = TCP_INDICATOR_WAITING;
 
 // MQTT client instances
 EthernetClient eth_client;
@@ -67,8 +66,10 @@ void tcp_server_init()
     LOG_INFO_F(CAT_TCP, "TCP server initialized on port %d", TCP_SERVER_PORT);
 }
 
-void tcp_server_update()
+bool tcp_server_update()
 {
+    bool client_connected = false;
+    // Accept new client if available
     EthernetClient new_client = tcp_server.accept();
 
     // Accept only one client at a time
@@ -78,8 +79,8 @@ void tcp_server_update()
         tcp_client.connected = true;
         tcp_client.info = "Client connected: " + new_client.remoteIP().toString() + ":" + String(new_client.remotePort());
         tcp_client.last_active_time = millis();
-        tcp_indicator_state = TCP_INDICATOR_CONNECTED;
         LOG_INFO_MSG(CAT_TCP, tcp_client.info);
+        client_connected = true;
     }
 
     if (tcp_client.client) 
@@ -90,8 +91,8 @@ void tcp_server_update()
             tcp_client.client.stop();
             tcp_client.connected = false;
             tcp_client.info = "Client disconnected (lost connection)";
-            tcp_indicator_state = TCP_INDICATOR_WAITING;
             LOG_INFO_MSG(CAT_TCP, tcp_client.info);
+            client_connected = false;
         }
         // If client is connected but inactive for too long, disconnect
         else if (millis() - tcp_client.last_active_time > CLIENT_TIMEOUT_MS) 
@@ -99,15 +100,22 @@ void tcp_server_update()
             tcp_client.client.stop();
             tcp_client.connected = false;
             tcp_client.info = "Client disconnected (timeout)";
-            tcp_indicator_state = TCP_INDICATOR_WAITING;
             LOG_WARN_MSG(CAT_TCP, tcp_client.info);
+            client_connected = false;
         }
         // If client sent any data, reset timeout
         else if (tcp_client.client.available()) 
         {
             tcp_client.last_active_time = millis();
+            client_connected = true;
+        }
+        // Client still connected but no data
+        else
+        {
+            client_connected = true; 
         }
     }
+    return client_connected;
 }
 
 int receive_tcp_packet(TcpPacket &packet)

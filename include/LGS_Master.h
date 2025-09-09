@@ -6,6 +6,9 @@
  *  Tested with Arduino Opta
  */
 
+//--------------- This files is Deprecated ---------------
+// Use lgs_controller.h and lgs_controller.cpp instead
+
 #ifndef LGS_MASTER_H
 #define LGS_MASTER_H
 

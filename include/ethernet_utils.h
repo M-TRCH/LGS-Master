@@ -80,7 +80,6 @@ extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition numbe
 extern EthernetServer tcp_server;
 extern TcpClientInfo tcp_client;
 extern TcpPacket tcp_packet;
-extern TcpIndicatorState_t tcp_indicator_state;
 
 // MQTT client instances
 extern EthernetClient eth_client;
@@ -100,8 +99,9 @@ void tcp_server_init();
 
 /**
  * @brief Update TCP server and manage client connection
+ * @return true if client connected, false otherwise
  */
-void tcp_server_update();
+bool tcp_server_update();
 
 /**
  * @brief Receive and parse a TCP packet from client.
