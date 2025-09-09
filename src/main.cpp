@@ -9,7 +9,7 @@ void setup()
     // Initialize configuration with module type, IP address, and firmware version
     config_init(ModuleType::STANDARD, 
         192, 168, 0, 99, 
-        8, 9, 2025);
+        9, 9, 2025);
 #endif
 
 #ifdef LOGGER_H
@@ -29,18 +29,29 @@ void setup()
 
 #ifdef ETHERNET_UTILS_H
     if (!dev_mode_activated)
-    {
-        // Indicate network init with yellow LED on panel display
+    {   
+        // Indicate network initialization with white LED
         set_info(cl_yellow, device_info);
 
         // Initialize Ethernet and TCP server
         ethernet_init();
 
-        // Initialize TCP server
-        tcp_server_init();
+        if (ethernet_not_linked)
+        {
+            // If Ethernet cable is not connected, indicate with blue LED
+            set_info(cl_blue, device_info);
+        }
+        else
+        {
+            // Initialize TCP server
+            tcp_server_init();
 
-        // Initialize MQTT connection
-        mqtt_init();
+            // Initialize MQTT connection
+            mqtt_init();
+
+            // Indicate successful network connection with green LED
+            set_info(cl_green, device_info);
+        }
     }
 #endif
 
@@ -73,7 +84,7 @@ void loop()
 #endif
 
 #ifdef ETHERNET_UTILS_H
-    if (!dev_mode_activated)
+    if (!dev_mode_activated && !ethernet_not_linked)
     {
         // Update TCP server and manage client connection    
         tcp_server_update();

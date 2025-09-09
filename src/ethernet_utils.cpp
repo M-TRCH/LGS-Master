@@ -1,5 +1,8 @@
 #include "ethernet_utils.h"
 
+// Ethernet connection status
+bool ethernet_not_linked = false; // Track Ethernet link status
+
 // tcp server and client instances
 uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for each device
 EthernetServer tcp_server(TCP_SERVER_PORT);
@@ -46,10 +49,12 @@ void ethernet_init()
     if (Ethernet.linkStatus() == LinkOFF) 
     {
         LOG_WARN_MSG(CAT_NETWORK, "Ethernet cable is not connected");
+        ethernet_not_linked = true;
     } 
     else 
     {
         LOG_INFO_MSG(CAT_NETWORK, "Ethernet cable connected successfully");
+        ethernet_not_linked = false;
     }
     LOG_INFO_MSG(CAT_NETWORK, "Ethernet initialized successfully");
 }

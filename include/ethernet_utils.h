@@ -6,9 +6,9 @@
 #include "system.h"
 
 // tcp server settings
-#define TCP_SERVER_PORT     2000
+#define TCP_SERVER_PORT     2000    // TCP server port
 #define CLIENT_TIMEOUT_MS   30000   // timeout in ms
-#define MAX_DEVICE          9999    // maximum number of devices
+#define MAX_DEVICE          9999    // maximum number of devices 
 
 // MQTT settings
 #define MQTT_BROKER_IP              "demo.siamatic.dev" 
@@ -71,6 +71,9 @@ struct MqttMessageType
     static constexpr const char* DEBUG   = "debug";
     static constexpr const char* VERBOSE = "verbose";
 };
+
+// Ethernet connection status
+extern bool ethernet_not_linked;
 
 // tcp server and client instances 
 extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition number per device
