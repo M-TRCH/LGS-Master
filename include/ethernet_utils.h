@@ -15,7 +15,6 @@
 #define MQTT_BROKER_PORT            1883
 #define MQTT_USERNAME               "admin"
 #define MQTT_PASSWORD               "admin"
-#define MQTT_DEFAULT_TOPIC          "lgs/opta"
 #define MQTT_RECONNECT_INTERVAL_MS  (15 * 60000)  // wait 15 minutes between reconnect attempts
 
 // Struct for storing client information
@@ -85,7 +84,9 @@ extern TcpPacket tcp_packet;
 extern EthernetClient eth_client;
 extern PubSubClient mqtt_client;
 extern MqttClientInfo mqtt_info;
-extern String mqtt_client_id;
+extern String mqtt_client_id;   // MQTT client ID ("lgs" + IP address without dots e.g. "lgs192168099")
+extern String mqtt_topic;       // MQTT topic to publish messages to ("lgs/" + IP address without dots + "/opta" e.g. "lgs/192168099/opta")
+extern String mqtt_device_id;   // Device ID (IP address with dots e.g. "192.168.0.99")
 
 /**
  * @brief Initialize Ethernet connection
@@ -147,13 +148,13 @@ bool mqtt_init();
 void mqtt_update();
 
 /**
- * @brief Publish a JSON formatted message to MQTT broker.
- * @param type Message type (use MqttMessageType constants)
+ * @brief Publish a JSON-formatted message to MQTT broker.
+ * @param level Message level (use MqttMessageType constants)
  * @param message Message content
- * @param topic MQTT topic to publish to (default: MQTT_DEFAULT_TOPIC)
+ * @param topic MQTT topic to publish to (default is mqtt_topic)
  * @return true if published successfully, false otherwise.
  */
-bool mqtt_publish_json(const char* type, const String& message, const char* topic = MQTT_DEFAULT_TOPIC);
+bool mqtt_publish_json(const char* level, const String& message, const char* topic=mqtt_topic.c_str());
 
 /**
  * @brief Publish TCP packet details to MQTT broker in JSON format.

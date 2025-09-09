@@ -13,7 +13,9 @@ TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
 EthernetClient eth_client;
 PubSubClient mqtt_client(eth_client);
 MqttClientInfo mqtt_info = {&mqtt_client, false, "", 0};
-String mqtt_client_id = "";
+String mqtt_client_id = "";   
+String mqtt_topic = "";       
+String mqtt_device_id = "";   
 
 void ethernet_init()
 {
@@ -32,8 +34,14 @@ void ethernet_init()
     
     // Initialize with static IP configuration
     Ethernet.begin(ip, dns, gateway, subnet);
-    mqtt_client_id = "lgs_" + String(device_info.ip_address.ip4);  // Use last octet of IP for client ID (e.g. lgs_12)
     
+    // Generate MQTT client ID and topic based on IP address
+    String ip_dot_str = String(ip1) + "." + String(ip2) + "." + String(ip3) + "." + String(ip4);
+    String ip_str = String(ip1) + String(ip2) + String(ip3) + String(ip4);
+    mqtt_client_id = "lgs" + ip_str;            // e.g. "lgs192168099"
+    mqtt_topic = "lgs/" + ip_str + "/opta";     // e.g. "lgs/192168099/opta"
+    mqtt_device_id = ip_dot_str;                // e.g. "192.168.0.99"
+
     // Log IP address
     LOG_VERBOSE_F(CAT_NETWORK, "IP Address: %d.%d.%d.%d", 
                   Ethernet.localIP()[0], Ethernet.localIP()[1], 
@@ -326,7 +334,7 @@ void mqtt_update()
     mqtt_client.loop(); // Process incoming/outgoing MQTT messages
 }
 
-bool mqtt_publish_json(const char* type, const String& message, const char* topic)
+bool mqtt_publish_json(const char* level, const String& message, const char* topic)
 {
     if (!mqtt_info.connected) 
     {
@@ -334,7 +342,12 @@ bool mqtt_publish_json(const char* type, const String& message, const char* topi
         return false;
     }
     
-    String json = "{\"type\":\"" + String(type) + "\",\"message\":\"" + message + "\"}";
+    String json = "{";
+    json += "\"device_id\":\"" + String(mqtt_device_id) + "\",";
+    json += "\"level\":\"" + String(level) + "\",";
+    json += "\"message\":\"" + message + "\"";
+    json += "}";
+
     bool result = mqtt_client.publish(topic, json.c_str());
     
     if (result) 

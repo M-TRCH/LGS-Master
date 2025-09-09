@@ -13,7 +13,7 @@ void setup()
 
 #ifdef LOGGER_H
     // Initialize logging system first
-    logger_init(LOG_INFO);
+    logger_init(LOG_VERBOSE);
 #endif
 
 #ifdef SYSTEM_H
@@ -100,7 +100,7 @@ void loop()
             if (return_tcp_packet(tcp_packet))
             {
                 // Log sent packet details
-                publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Sent first packet - "));
+                publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("First response packet - "));
             }
 
             // Execute command from the packet
@@ -109,7 +109,7 @@ void loop()
                 if (return_tcp_packet(tcp_packet))
                 {
                     // Log sent packet details
-                    publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Sent second packet - "));
+                    publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Second response packet - "));
                 }
             }
         }
