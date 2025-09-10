@@ -98,6 +98,58 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
     return true;
 }
 
+bool request_status(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, ModuleStatus_t& status)
+{
+    // Get module id
+    int module_id = addr.get_id();
+    if (module_id < 0) 
+    {
+        LOG_ERROR_MSG(CAT_LGS, "Invalid module address");
+        return false;
+    }
+    
+    // Send command based on module type
+    if (type == ModuleType::STANDARD) 
+    {
+        // Command parameters
+        const uint8_t cmd_send_timeout = 200;   // Timeout for command send
+        const uint8_t cmd_send_retries = 3;     // Number of retries for command send
+        uint8_t cmd_addr = 0;
+
+        // Mapping color to command address (light location)
+        if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_addr = LGSAddress::LED12;   // Red to LED1 and LED2
+        else if (color.r == 0 && color.g == 255 && color.b == 0)    cmd_addr = LGSAddress::LED34;   // Green to LED3 and LED4
+        else if (color.r == 0 && color.g == 0 && color.b == 255)    cmd_addr = LGSAddress::LED56;   // Blue to LED5 and LED6
+        else if (color.r == 255 && color.g == 145 && color.b == 0)  cmd_addr = LGSAddress::LED78;   // Yellow to LED7 and LED8
+        else 
+        {
+            LOG_ERROR_MSG(CAT_LGS, "Invalid color for STANDARD module");
+            return false;
+        }
+
+        if (lgs.read(module_id, cmd_addr, cmd_send_timeout, cmd_send_retries))
+        {
+            int r = lgs.readData(cmd_addr, 0);
+            int g = lgs.readData(cmd_addr, 1);
+            int b = lgs.readData(cmd_addr, 2);
+            if (r == 0 && g == 0 && b == 0) status = ModuleStatus_t::MODULE_IDLE;
+            else                            status = ModuleStatus_t::MODULE_BUSY;
+            return true;
+        }
+        else
+        {
+            status = ModuleStatus_t::MODULE_ERROR;
+            LOG_ERROR_F(CAT_LGS, "Failed to read status from module ID %d", module_id);
+            return false;
+        }
+    }
+    else if (type == ModuleType::NARCOTIC)
+    {
+
+    }
+    return true;
+}
+
 void soft_reset(bool indicate)
 {
     if (indicate)

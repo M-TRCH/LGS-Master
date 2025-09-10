@@ -70,7 +70,6 @@ bool tcp_command_execute(const TcpPacket packet)
                     tcp_packet.ret_status = PacketStatus::FAIL;  
                     LOG_ERROR_F(CAT_LGS, "CMD_ON failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
                 }
-                return_tcp_packet(tcp_packet);
                 break;
 
             case CMD_OFF:
@@ -87,7 +86,24 @@ bool tcp_command_execute(const TcpPacket packet)
                 break;
 
             case CMD_RETURN:
-                // Handle CMD_RETURN
+                ModuleStatus_t status;
+                if (request_status(ModuleType::STANDARD, addr, color, status))
+                {
+                    if (status == ModuleStatus_t::MODULE_IDLE)
+                        tcp_packet.ret_status = PacketStatus::IDLE; // Idle
+                    else if (status == ModuleStatus_t::MODULE_BUSY)
+                        tcp_packet.ret_status = PacketStatus::BUSY; // Busy
+                    else
+                        tcp_packet.ret_status = PacketStatus::FAIL; // Error
+                    
+                    LOG_INFO_F(CAT_LGS, "CMD_RETURN executed at [%d, %d] with color %d: status=%d", 
+                        packet.row, packet.column, packet.color, tcp_packet.ret_status);
+                }
+                else
+                {
+                    tcp_packet.ret_status = PacketStatus::FAIL;  
+                    LOG_ERROR_F(CAT_LGS, "CMD_RETURN failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                }
                 break;
 
             default:

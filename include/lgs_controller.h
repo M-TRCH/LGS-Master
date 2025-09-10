@@ -56,6 +56,14 @@ struct ModuleAddress
     }
 };
 
+// Module status enumeration
+typedef enum    
+{
+    MODULE_ERROR = 0,
+    MODULE_IDLE,
+    MODULE_BUSY
+} ModuleStatus_t;
+
 extern LGSbus lgs;
 extern ModuleColor cl_clear;
 extern ModuleColor cl_red;
@@ -84,6 +92,16 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info);
  * @param state true to turn on, false to turn off
  */
 bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false);
+
+/**
+ * @brief Request status from a module
+ * @param type ModuleType (STANDARD or NARCOTIC)
+ * @param addr ModuleAddress containing module ID or row/column
+ * @param color ModuleColor indicating which color to check (for STANDARD modules)
+ * @param status Output parameter to hold the module status (IDLE, BUSY, ERROR)
+ * @return true if communication was successful, false otherwise
+ */
+bool request_status(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, ModuleStatus_t& status);
 
 /*  
  * @brief Perform a soft reset of the system with LED indication

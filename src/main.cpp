@@ -13,7 +13,7 @@ void setup()
 
 #ifdef LOGGER_H
     // Initialize logging system first
-    logger_init(LOG_VERBOSE);
+    logger_init(LOG_INFO);
 #endif
 
 #ifdef SYSTEM_H
@@ -56,7 +56,7 @@ void setup()
 
     // Start watchdog if not in dev mode
     mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
-}
+}   
 
 void loop() 
 {

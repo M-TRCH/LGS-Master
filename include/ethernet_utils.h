@@ -6,9 +6,9 @@
 #include "system.h"
 
 // tcp server settings
-#define TCP_SERVER_PORT     2000    // TCP server port
-#define CLIENT_TIMEOUT_MS   30000   // timeout in ms
-#define MAX_DEVICE          9999    // maximum number of devices 
+#define TCP_SERVER_PORT     2000        // TCP server port
+#define CLIENT_TIMEOUT_MS   120000      // timeout in ms (120 seconds)
+#define MAX_DEVICE          9999        // maximum number of devices
 
 // MQTT settings
 #define MQTT_BROKER_IP              "demo.siamatic.dev" 
