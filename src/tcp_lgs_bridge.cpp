@@ -60,32 +60,35 @@ bool tcp_command_execute(const TcpPacket packet)
         switch (packet.command)
         {
             case CMD_ON:
+            {
                 if (set_color(ModuleType::STANDARD, addr, color, 1.0, true))
                 {
                     tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
-                    LOG_INFO_F(CAT_LGS, "CMD_ON executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                    LOG_INFO_F(CAT_LGS, "'ON' executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
                 }
                 else
                 {
                     tcp_packet.ret_status = PacketStatus::FAIL;  
-                    LOG_ERROR_F(CAT_LGS, "CMD_ON failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                    LOG_ERROR_F(CAT_LGS, "'ON' failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
                 }
                 break;
-
+            }
             case CMD_OFF:
+            {
                 if (set_color(ModuleType::STANDARD, addr, color, 1.0, false))
                 {
                     tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
-                    LOG_INFO_F(CAT_LGS, "CMD_OFF executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                    LOG_INFO_F(CAT_LGS, "'OFF' executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
                 }
                 else
                 {
                     tcp_packet.ret_status = PacketStatus::FAIL;  
-                    LOG_ERROR_F(CAT_LGS, "CMD_OFF failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                    LOG_ERROR_F(CAT_LGS, "'OFF' failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
                 }
                 break;
-
-            case CMD_RETURN:
+            }
+            case CMD_REQUEST:
+            {
                 ModuleStatus_t status;
                 if (request_status(ModuleType::STANDARD, addr, color, status))
                 {
@@ -95,19 +98,27 @@ bool tcp_command_execute(const TcpPacket packet)
                         tcp_packet.ret_status = PacketStatus::BUSY; // Busy
                     else
                         tcp_packet.ret_status = PacketStatus::FAIL; // Error
-                    
-                    LOG_INFO_F(CAT_LGS, "CMD_RETURN executed at [%d, %d] with color %d: status=%d", 
+
+                    LOG_INFO_F(CAT_LGS, "'REQUEST' executed at [%d, %d] with color %d: status=%d",
                         packet.row, packet.column, packet.color, tcp_packet.ret_status);
                 }
                 else
                 {
-                    tcp_packet.ret_status = PacketStatus::FAIL;  
-                    LOG_ERROR_F(CAT_LGS, "CMD_RETURN failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
+                    tcp_packet.ret_status = PacketStatus::FAIL;
+                    LOG_ERROR_F(CAT_LGS, "'REQUEST' failed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
                 }
                 break;
-
+            }
+            case CMD_REBOOT:
+            {
+                LOG_INFO_MSG(CAT_LGS, "'REBOOT' command executed, system resetting...");
+                soft_reset(true); // Perform soft reset with LED indication
+                break;
+            }
             default:
+            {
                 return false; // Unknown command
+            }
         }
     }
     else if (device_type == ModuleType::NARCOTIC)

@@ -19,9 +19,10 @@ typedef enum
 // TCP command types
 typedef enum LGSTCPCommand
 {
-    CMD_OFF = 0,
-    CMD_ON,
-    CMD_RETURN
+    CMD_OFF     = 0,
+    CMD_ON      = 1,
+    CMD_REQUEST = 2,
+    CMD_REBOOT  = 9
 } LGSTCPCommand_t;
 
 
