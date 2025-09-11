@@ -13,7 +13,7 @@ void setup()
 
 #ifdef LOGGER_H
     // Initialize logging system first
-    logger_init(LOG_DEBUG);
+    logger_init(LOG_INFO);
     logger_set_category(CAT_MQTT, false); // Disable MQTT category by default
 #endif
 
