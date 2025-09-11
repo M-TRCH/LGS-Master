@@ -6,14 +6,14 @@ void setup()
 {
 #ifdef CONFIG_H
     // Initialize configuration with module type, IP address, and firmware version
-    config_init(ModuleType::STANDARD, 
-        192, 168, 0, 99, 
-        9, 9, 2025);
+    config_init(ModuleType::NARCOTIC, 
+        192, 168, 0, 98, 
+        11, 9, 2025);
 #endif
 
 #ifdef LOGGER_H
     // Initialize logging system first
-    logger_init(LOG_INFO);
+    logger_init(LOG_DEBUG);
     logger_set_category(CAT_MQTT, false); // Disable MQTT category by default
 #endif
 

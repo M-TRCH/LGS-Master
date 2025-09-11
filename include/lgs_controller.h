@@ -8,19 +8,19 @@
 // LGS command address (Refer to Documentation)
 struct LGSAddress 
 {
-    static constexpr int GREET  = 0;
-    static constexpr int LED1   = 1;
-    static constexpr int LED2   = 2;
-    static constexpr int LED3   = 3;
-    static constexpr int LED4   = 4;
-    static constexpr int LED5   = 5;
-    static constexpr int LED6   = 6;
-    static constexpr int LED7   = 7;
-    static constexpr int LED8   = 8;
-    static constexpr int LED12  = 9;
-    static constexpr int LED34  = 10;
-    static constexpr int LED56  = 11;
-    static constexpr int LED78  = 12;
+    static constexpr int LGS_GREET  = 0;
+    static constexpr int LGS_LED1   = 1;
+    static constexpr int LGS_LED2   = 2;
+    static constexpr int LGS_LED3   = 3;
+    static constexpr int LGS_LED4   = 4;
+    static constexpr int LGS_LED5   = 5;
+    static constexpr int LGS_LED6   = 6;
+    static constexpr int LGS_LED7   = 7;
+    static constexpr int LGS_LED8   = 8;
+    static constexpr int LGS_LED12  = 9;
+    static constexpr int LGS_LED34  = 10;
+    static constexpr int LGS_LED56  = 11;
+    static constexpr int LGS_LED78  = 12;
 };
 
 // Color structure to hold RGB values
@@ -91,7 +91,7 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info);
  * @param color ModuleColor containing RGB values
  * @param state true to turn on, false to turn off
  */
-bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false);
+bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false, int quantity=0);
 
 /**
  * @brief Request status from a module

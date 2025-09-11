@@ -42,15 +42,15 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info)
     else                                                        color_code = 0; // Off/Unknown
 
     // Send device information to the panel display
-    lgs.writeData(LGSAddress::GREET, 0, color_code);
-    lgs.writeData(LGSAddress::GREET, 1, 0); // Unused   
-    lgs.writeData(LGSAddress::GREET, 2, device_info.firmware_version.day);
-    lgs.writeData(LGSAddress::GREET, 3, device_info.firmware_version.month);
-    lgs.writeData(LGSAddress::GREET, 4, device_info.firmware_version.year % 100); // Last two digits of year
-    return lgs.write(cmd_id, cmd_addr_num, LGSAddress::GREET, cmd_send_timeout, cmd_send_retries);
+    lgs.writeData(LGSAddress::LGS_GREET, 0, color_code);
+    lgs.writeData(LGSAddress::LGS_GREET, 1, 0); // Unused
+    lgs.writeData(LGSAddress::LGS_GREET, 2, device_info.firmware_version.day);
+    lgs.writeData(LGSAddress::LGS_GREET, 3, device_info.firmware_version.month);
+    lgs.writeData(LGSAddress::LGS_GREET, 4, device_info.firmware_version.year % 100); // Last two digits of year
+    return lgs.write(cmd_id, cmd_addr_num, LGSAddress::LGS_GREET, cmd_send_timeout, cmd_send_retries);
 }
 
-bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness, bool state)
+bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness, bool state, int quantity)
 {
     // Validate brightness range
     if (brightness < 0.0f) brightness = 0.0f;
@@ -79,10 +79,10 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
         uint8_t cmd_addr = 0;
 
         // Mapping color to command address (light location)
-        if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_addr = LGSAddress::LED12;   // Red to LED1 and LED2
-        else if (color.r == 0 && color.g == 255 && color.b == 0)    cmd_addr = LGSAddress::LED34;   // Green to LED3 and LED4
-        else if (color.r == 0 && color.g == 0 && color.b == 255)    cmd_addr = LGSAddress::LED56;   // Blue to LED5 and LED6
-        else if (color.r == 255 && color.g == 145 && color.b == 0)  cmd_addr = LGSAddress::LED78;   // Yellow to LED7 and LED8
+        if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_addr = LGSAddress::LGS_LED12;   // Red to LED1 and LED2
+        else if (color.r == 0 && color.g == 255 && color.b == 0)    cmd_addr = LGSAddress::LGS_LED34;   // Green to LED3 and LED4
+        else if (color.r == 0 && color.g == 0 && color.b == 255)    cmd_addr = LGSAddress::LGS_LED56;   // Blue to LED5 and LED6
+        else if (color.r == 255 && color.g == 145 && color.b == 0)  cmd_addr = LGSAddress::LGS_LED78;   // Yellow to LED7 and LED8
         else 
         {
             LOG_ERROR_MSG(CAT_LGS, "Invalid color for STANDARD module");
@@ -94,6 +94,31 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
         lgs.writeData(cmd_addr, 1, g);
         lgs.writeData(cmd_addr, 2, b);
         return lgs.write(module_id, cmd_addr_num, cmd_addr, cmd_send_timeout, cmd_send_retries);
+    }
+    else if (type == ModuleType::NARCOTIC)
+    {
+        // Command parameters
+        const uint8_t cmd_addr_num = 3;         // Number of command address to write
+        const uint8_t cmd_send_timeout = 200;   // Timeout for command send
+        const uint8_t cmd_send_retries = 3;     // Number of retries for command send
+        uint8_t cmd_color = 0;
+        
+        // Mapping color to command address (light color)
+        if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_color = LGSAddress::LGS_LED1;    // Red
+        else if (color.r == 0 && color.g == 255 && color.b == 0)    cmd_color = LGSAddress::LGS_LED2;    // Green
+        else if (color.r == 0 && color.g == 0 && color.b == 255)    cmd_color = LGSAddress::LGS_LED3;    // Blue
+        else if (color.r == 255 && color.g == 145 && color.b == 0)  cmd_color = LGSAddress::LGS_LED4;    // Yellow
+        else 
+        {
+            LOG_ERROR_MSG(CAT_LGS, "Invalid color for NARCOTIC module");
+            return false;
+        }
+
+        // Send color command
+        lgs.writeData(LGSAddress::LGS_LED1, 0, cmd_color);
+        lgs.writeData(LGSAddress::LGS_LED1, 1, brightness * 255);
+        lgs.writeData(LGSAddress::LGS_LED1, 2, abs(quantity));
+        return lgs.write(module_id, cmd_addr_num, LGSAddress::LGS_LED1, cmd_send_timeout, cmd_send_retries);
     }
     return true;
 }
@@ -117,10 +142,10 @@ bool request_status(const ModuleType& type, const ModuleAddress& addr, const Mod
         uint8_t cmd_addr = 0;
 
         // Mapping color to command address (light location)
-        if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_addr = LGSAddress::LED12;   // Red to LED1 and LED2
-        else if (color.r == 0 && color.g == 255 && color.b == 0)    cmd_addr = LGSAddress::LED34;   // Green to LED3 and LED4
-        else if (color.r == 0 && color.g == 0 && color.b == 255)    cmd_addr = LGSAddress::LED56;   // Blue to LED5 and LED6
-        else if (color.r == 255 && color.g == 145 && color.b == 0)  cmd_addr = LGSAddress::LED78;   // Yellow to LED7 and LED8
+        if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_addr = LGSAddress::LGS_LED12;   // Red to LED1 and LED2
+        else if (color.r == 0 && color.g == 255 && color.b == 0)    cmd_addr = LGSAddress::LGS_LED34;   // Green to LED3 and LED4
+        else if (color.r == 0 && color.g == 0 && color.b == 255)    cmd_addr = LGSAddress::LGS_LED56;   // Blue to LED5 and LED6
+        else if (color.r == 255 && color.g == 145 && color.b == 0)  cmd_addr = LGSAddress::LGS_LED78;   // Yellow to LED7 and LED8
         else 
         {
             LOG_ERROR_MSG(CAT_LGS, "Invalid color for STANDARD module");
@@ -200,10 +225,9 @@ void red_button_event()
                 }
             }
         }
-
         else if (device_type == ModuleType::NARCOTIC)
         {
-           
+            // Placeholder for narcotic module handling
         }
 
         set_info(cl_clear, device_info); // Clear LED after config
@@ -239,7 +263,7 @@ void green_button_event()
         }
         else if (device_type == ModuleType::NARCOTIC)
         {
-
+            // Placeholder for narcotic module handling
         }
 
         set_info(cl_clear, device_info); // Clear LED after config
@@ -250,7 +274,32 @@ void blue_button_event()
 {
     if (debounce_sw(B_SW_PIN))
     {
-        // Placeholder for blue button event handling
+        set_info(cl_blue, device_info);  // Indicate config mode with blue LED
+
+        if (device_type == ModuleType::STANDARD)
+        {
+            // Placeholder for standard module handling
+        }
+
+        else if (device_type == ModuleType::NARCOTIC)
+        {
+            for (uint8_t col = 1; col <= 8; col++)
+            {
+                mbed::Watchdog::get_instance().kick();
+
+                for (uint8_t row = 0; row <= 9; row++)
+                {
+                    bool success = set_color(ModuleType::NARCOTIC, ModuleAddress(row, col), cl_red, 0.2, true, (row * 10 + col));
+                    LOG_DEBUG_F(CAT_LGS, "Set color at [%d, %d]: %s", 
+                        row, col, 
+                        success ? "Success" : "Fail");
+                        
+                    delay(0);
+                }
+            }
+        }
+
+        set_info(cl_clear, device_info); // Clear LED after config
     }
 }
 
@@ -258,6 +307,18 @@ void yellow_button_event()
 {
     if (debounce_sw(Y_SW_PIN))
     {
-        // Placeholder for yellow button event handling
+        set_info(cl_yellow, device_info);  // Indicate config mode with yellow LED
+
+        if (device_type == ModuleType::STANDARD)
+        {
+            // Placeholder for standard module handling
+        }
+
+        else if (device_type == ModuleType::NARCOTIC)
+        {
+            // Placeholder for narcotic module handling
+        }
+
+        set_info(cl_clear, device_info); // Clear LED after config
     }
 }
