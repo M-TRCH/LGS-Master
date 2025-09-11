@@ -205,7 +205,32 @@ bool request_status(const ModuleType& type, const ModuleAddress& addr, const Mod
     }
     else if (type == ModuleType::NARCOTIC)
     {
+        // Command parameters
+        const uint8_t cmd_send_timeout = 200;   // Timeout for command send
+        const uint8_t cmd_send_retries = 3;     // Number of retries for command send
+        uint8_t cmd_addr = 0;
 
+        // Mapping color to command address (light color)
+        if (color.r == 255 && color.g == 0 && color.b == 0) cmd_addr = LGSAddress::LGS_LED1;   // Red to LED1
+        else    
+        {
+            LOG_ERROR_MSG(CAT_LGS, "Invalid color for NARCOTIC module");
+            return false;
+        }
+
+        if (lgs.read(module_id, cmd_addr, cmd_send_timeout, cmd_send_retries))
+        {
+            int sensor = lgs.readData(cmd_addr, 0);
+            if (sensor == 0)    status = ModuleStatus_t::MODULE_IDLE;   // In position
+            else                status = ModuleStatus_t::MODULE_BUSY;   // Not in position
+            return true;
+        }
+        else
+        {
+            status = ModuleStatus_t::MODULE_ERROR;
+            LOG_ERROR_F(CAT_LGS, "Failed to read status from module ID %d", module_id);
+            return false;
+        }   
     }
     return true;
 }

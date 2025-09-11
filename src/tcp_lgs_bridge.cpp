@@ -166,21 +166,41 @@ bool tcp_command_execute(const TcpPacket packet)
                 if (set_color(ModuleType::NARCOTIC, addr, color, 0.0, false, 0, status))
                 {
                     if (status == ModuleStatus_t::MODULE_IDLE)
-                        tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED; // Successfully turned off
+                        tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;   // Successfully turned off
+                    else 
+                        tcp_packet.ret_status = PacketStatus::FAIL;             // Cannot turn off, module busy
                     LOG_INFO_F(CAT_LGS, "'OFF' executed at [%d, %d], Status=%d", packet.row, packet.column, status);
                 }
                 else
                 {
                     if (status == ModuleStatus_t::MODULE_BUSY)
-                        tcp_packet.ret_status = PacketStatus::NO_ACTION; // Cannot turn off, module busy
+                        tcp_packet.ret_status = PacketStatus::NO_ACTION;    // Cannot turn off, module busy
                     else
-                        tcp_packet.ret_status = PacketStatus::FAIL; // Error
+                        tcp_packet.ret_status = PacketStatus::FAIL;         // Error
                     LOG_ERROR_F(CAT_LGS, "'OFF' failed at [%d, %d], Status=%d", packet.row, packet.column, status);
                 }
                 break;
             }
             case CMD_REQUEST:
             {
+                ModuleStatus_t status = ModuleStatus_t::MODULE_UNKNOWN;
+                if (request_status(ModuleType::NARCOTIC, addr, color, status))
+                {
+                    if (status == ModuleStatus_t::MODULE_IDLE)
+                        tcp_packet.ret_status = PacketStatus::IDLE;     // Idle
+                    else if (status == ModuleStatus_t::MODULE_BUSY)
+                        tcp_packet.ret_status = PacketStatus::BUSY;     // Busy
+                    else
+                        tcp_packet.ret_status = PacketStatus::FAIL;     // Error
+
+                    LOG_INFO_F(CAT_LGS, "'REQUEST' executed at [%d, %d]: status=%d",
+                        packet.row, packet.column, tcp_packet.ret_status);
+                }
+                else
+                {
+                    tcp_packet.ret_status = PacketStatus::FAIL;
+                    LOG_ERROR_F(CAT_LGS, "'REQUEST' failed at [%d, %d]", packet.row, packet.column);
+                }
                 break;
             }
             case CMD_REBOOT:
