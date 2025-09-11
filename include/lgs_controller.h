@@ -61,7 +61,8 @@ typedef enum
 {
     MODULE_ERROR = 0,
     MODULE_IDLE,
-    MODULE_BUSY
+    MODULE_BUSY,
+    MODULE_UNKNOWN = 9
 } ModuleStatus_t;
 
 extern LGSbus lgs;
@@ -71,6 +72,7 @@ extern ModuleColor cl_green;
 extern ModuleColor cl_blue;
 extern ModuleColor cl_yellow;
 extern ModuleColor cl_white;
+extern ModuleStatus_t DEFAULT_STATUS;
 
 /*
  * @brief Initialize the LGS communication bus
@@ -91,7 +93,7 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info);
  * @param color ModuleColor containing RGB values
  * @param state true to turn on, false to turn off
  */
-bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false, int quantity=0);
+bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness=1.0, bool state=false, int quantity=0, ModuleStatus_t& status=DEFAULT_STATUS);
 
 /**
  * @brief Request status from a module

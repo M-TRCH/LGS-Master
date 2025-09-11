@@ -7,6 +7,7 @@ ModuleColor cl_green(0, 255, 0);
 ModuleColor cl_blue(0, 0, 255);
 ModuleColor cl_yellow(255, 145, 0);
 ModuleColor cl_white(255, 255, 255);
+ModuleStatus_t DEFAULT_STATUS = ModuleStatus_t::MODULE_UNKNOWN;
 
 void lgs_init()
 {
@@ -50,16 +51,11 @@ bool set_info(const ModuleColor& color, const DeviceInfo_t& info)
     return lgs.write(cmd_id, cmd_addr_num, LGSAddress::LGS_GREET, cmd_send_timeout, cmd_send_retries);
 }
 
-bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness, bool state, int quantity)
+bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleColor& color, float brightness, bool state, int quantity, ModuleStatus_t& status)
 {
     // Validate brightness range
     if (brightness < 0.0f) brightness = 0.0f;
     if (brightness > 1.0f) brightness = 1.0f;
-
-    // Calculate RGB values
-    int r = state ? int(color.r * brightness) : 0;
-    int g = state ? int(color.g * brightness) : 0;
-    int b = state ? int(color.b * brightness) : 0;
 
     // Get module id
     int module_id = addr.get_id();
@@ -77,6 +73,11 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
         const uint8_t cmd_send_timeout = 50;    // Timeout for command send
         const uint8_t cmd_send_retries = 3;     // Number of retries for command send
         uint8_t cmd_addr = 0;
+
+        // Calculate RGB values
+        const int r = state ? int(color.r * brightness) : 0;
+        const int g = state ? int(color.g * brightness) : 0;
+        const int b = state ? int(color.b * brightness) : 0;
 
         // Mapping color to command address (light location)
         if (color.r == 255 && color.g == 0 && color.b == 0)         cmd_addr = LGSAddress::LGS_LED12;   // Red to LED1 and LED2
@@ -98,7 +99,8 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
     else if (type == ModuleType::NARCOTIC)
     {
         // Command parameters
-        const uint8_t cmd_addr_num = 3;         // Number of command address to write
+        const uint8_t cmd_addr_on_num = 3;      // Number of command address to write for ON command
+        const uint8_t cmd_addr_off_num = 1;     // Number of command address to write for OFF command
         const uint8_t cmd_send_timeout = 200;   // Timeout for command send
         const uint8_t cmd_send_retries = 3;     // Number of retries for command send
         uint8_t cmd_color = 0;
@@ -114,11 +116,44 @@ bool set_color(const ModuleType& type, const ModuleAddress& addr, const ModuleCo
             return false;
         }
 
-        // Send color command
-        lgs.writeData(LGSAddress::LGS_LED1, 0, cmd_color);
-        lgs.writeData(LGSAddress::LGS_LED1, 1, brightness * 255);
-        lgs.writeData(LGSAddress::LGS_LED1, 2, abs(quantity));
-        return lgs.write(module_id, cmd_addr_num, LGSAddress::LGS_LED1, cmd_send_timeout, cmd_send_retries);
+        // Send turn on command
+        if (state)
+        {
+            lgs.writeData(LGSAddress::LGS_LED1, 0, cmd_color);
+            lgs.writeData(LGSAddress::LGS_LED1, 1, brightness * 255);
+            lgs.writeData(LGSAddress::LGS_LED1, 2, abs(quantity));
+            return lgs.write(module_id, cmd_addr_on_num, LGSAddress::LGS_LED1, cmd_send_timeout, cmd_send_retries);
+        }
+        // Send turn off command
+        else
+        {
+            // reset data buffer before sending OFF command
+            lgs.writeData(LGSAddress::LGS_GREET, 0, 0);
+            lgs.writeData(LGSAddress::LGS_LED1, 0, 0);
+
+            // read sensor data before sending OFF command
+            if (!lgs.read(module_id, LGSAddress::LGS_GREET, cmd_send_timeout, cmd_send_retries))
+            {
+                LOG_ERROR_F(CAT_LGS, "Failed to read before sending OFF command to module ID %d", module_id);
+                return false;
+            }
+            else
+            {
+                // If the sensor data is true. (in position)
+                if (lgs.readData(LGSAddress::LGS_GREET, 0))
+                {
+                    status = ModuleStatus_t::MODULE_IDLE;
+                    return lgs.write(module_id, cmd_addr_off_num, LGSAddress::LGS_LED1, cmd_send_timeout, cmd_send_retries);
+                }
+                // If the sensor data is false. (not in position)
+                else
+                {
+                    LOG_ERROR_F(CAT_LGS, "Module ID %d not in position, cannot turn off", module_id);
+                    status = ModuleStatus_t::MODULE_BUSY;
+                    return false;
+                }
+            }
+        }
     }
     return true;
 }
@@ -316,7 +351,21 @@ void yellow_button_event()
 
         else if (device_type == ModuleType::NARCOTIC)
         {
-            // Placeholder for narcotic module handling
+             for (uint8_t col = 1; col <= 8; col++)
+            {
+                mbed::Watchdog::get_instance().kick();
+
+                for (uint8_t row = 0; row <= 9; row++)
+                {
+                    ModuleStatus_t status = ModuleStatus_t::MODULE_UNKNOWN;
+                    bool success = set_color(ModuleType::NARCOTIC, ModuleAddress(row, col), cl_red, 0.0, false, (row * 10 + col), status);
+                    LOG_DEBUG_F(CAT_LGS, "Set OFF at [%d, %d]: %s, Status=%d", 
+                        row, col, 
+                        success ? "Success" : "Fail",
+                        status);                            
+                    delay(0);
+                }
+            }
         }
 
         set_info(cl_clear, device_info); // Clear LED after config
