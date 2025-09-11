@@ -25,7 +25,6 @@ typedef enum LGSTCPCommand
     CMD_REBOOT  = 9
 } LGSTCPCommand_t;
 
-
 /*  
  * @brief Update TCP indicator LED based on connection state
  */

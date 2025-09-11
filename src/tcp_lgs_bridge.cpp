@@ -123,7 +123,73 @@ bool tcp_command_execute(const TcpPacket packet)
     }
     else if (device_type == ModuleType::NARCOTIC)
     {
-        // Handle narcotic module commands
+        // Validate row and column
+        if (packet.row < 0 || packet.row > 9 || packet.column < 1 || packet.column > 8)
+        {
+            LOG_ERROR_F(CAT_LGS, "Invalid row/column for narcotic module: row=%d, col=%d", packet.row, packet.column);
+            return false; // Invalid row/column for narcotic module
+        }
+
+        // Validate color
+        if (packet.color != 1)
+        {
+            LOG_ERROR_F(CAT_LGS, "Invalid color for narcotic module: color=%d", packet.color);
+            return false; // Invalid color
+        }
+
+        // convert to LGS addressing (row 1-10 to 9-0)
+        ModuleAddress addr(10 - packet.row, packet.column);
+
+        // Determine color (only red supported)
+        ModuleColor color = cl_red;
+
+        // Execute command
+        switch (packet.command)
+        {
+            case CMD_ON:
+            {
+                if (set_color(ModuleType::NARCOTIC, addr, color, 0.8, true, packet.quantity))
+                {
+                    tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
+                    LOG_INFO_F(CAT_LGS, "'ON' executed at [%d, %d] with quantity %d", packet.row, packet.column, packet.quantity);
+                }
+                else
+                {
+                    tcp_packet.ret_status = PacketStatus::FAIL;  
+                    LOG_ERROR_F(CAT_LGS, "'ON' failed at [%d, %d] with quantity %d", packet.row, packet.column, packet.quantity);
+                }
+                break;
+            }
+            case CMD_OFF:
+            {
+                ModuleStatus_t status = ModuleStatus_t::MODULE_UNKNOWN;
+                if (set_color(ModuleType::NARCOTIC, addr, color, 0.0, false, 0, status))
+                {
+                    if (status == ModuleStatus_t::MODULE_IDLE)
+                        tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED; // Successfully turned off
+                    LOG_INFO_F(CAT_LGS, "'OFF' executed at [%d, %d], Status=%d", packet.row, packet.column, status);
+                }
+                else
+                {
+                    if (status == ModuleStatus_t::MODULE_BUSY)
+                        tcp_packet.ret_status = PacketStatus::NO_ACTION; // Cannot turn off, module busy
+                    else
+                        tcp_packet.ret_status = PacketStatus::FAIL; // Error
+                    LOG_ERROR_F(CAT_LGS, "'OFF' failed at [%d, %d], Status=%d", packet.row, packet.column, status);
+                }
+                break;
+            }
+            case CMD_REQUEST:
+            {
+                break;
+            }
+            case CMD_REBOOT:
+            {
+                LOG_INFO_MSG(CAT_LGS, "'REBOOT' command executed, system resetting...");
+                soft_reset(true); // Perform soft reset with LED indication
+                break;
+            }
+        }
     }
     return true;   
 }

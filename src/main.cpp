@@ -113,6 +113,11 @@ void loop()
                     publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Second response packet - "));
                 }
             }
+            else
+            {
+                LOG_ERROR_F(CAT_LGS, "Failed to execute TCP command: cmd=%d, row=%d, col=%d, color=%d", 
+                    tcp_packet.command, tcp_packet.row, tcp_packet.column, tcp_packet.color);
+            }
         }
     }
 #endif
