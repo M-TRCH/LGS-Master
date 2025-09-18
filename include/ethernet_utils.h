@@ -11,7 +11,7 @@
 #define MAX_DEVICE          9999        // maximum number of devices
 
 // MQTT settings
-#define MQTT_BROKER_IP              "demo.siamatic.dev" 
+#define MQTT_BROKER_IP              "192.168.0.203" // Local MQTT broker IP address
 #define MQTT_BROKER_PORT            1883
 #define MQTT_USERNAME               "admin"
 #define MQTT_PASSWORD               "admin"
