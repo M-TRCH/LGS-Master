@@ -124,7 +124,7 @@ bool tcp_server_update();
  *
  * Example packet 2: B01R08C01Q0002L01M01T00N01D0000S15 (row 8, column 1, red on)
  * Example packet 3: B01R08C01Q0002L01M00T00N02D0000S15 (row 8, column 1, red off)
- * Example packet 4: B01R08C01Q0002L01M02T00N03D0000S18 (row 8, column 1, red idle)
+ * Example packet 4: B01R08C01Q0002L01M02T00N03D0000S18 (row 8, column 1, red idle?)
  * Example packet 5: B01R00C00Q0000L01M09T00N05D0000S16 (hardware reset)
  */
 int receive_tcp_packet(TcpPacket &packet);
