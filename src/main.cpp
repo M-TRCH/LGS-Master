@@ -1,125 +1,51 @@
+#include <ArduinoRS485.h> 
+#include <ArduinoModbus.h> 
 
-#include "system.h"
-#include "tcp_lgs_bridge.h"
-
+ModbusRTUClientClass mdb_client; 
 void setup() 
 {
-#ifdef CONFIG_H
-    // Initialize configuration with module type, IP address, and firmware version
-    config_init(ModuleType::STANDARD, 
-        192, 168, 0, 99, 
-        11, 9, 2025);
-#endif
-
-#ifdef LOGGER_H
-    // Initialize logging system first
-    logger_init(LOG_VERBOSE);
-    // logger_set_category(CAT_MQTT, false); // Disable MQTT category by default
-#endif
-
-#ifdef SYSTEM_H
-    // Initialize system
-    system_init();
-#endif
-
-#ifdef LGS_CONTROLLER_H
-    // Initialize LGS controller
-    lgs_init();
-#endif
-
-#ifdef ETHERNET_UTILS_H
-    if (!dev_mode_activated)
-    {   
-        // Set TCP indicator to idle initially
-        tcp_indicator_update(TCP_INDICATOR_IDLE);
-
-        // Initialize Ethernet and TCP server
-        ethernet_init();
-
-        if (ethernet_not_linked)
-        {   
-            // Indicate error if Ethernet cable is not connected
-            tcp_indicator_update(TCP_INDICATOR_ERROR); 
-        }
-        else
-        {
-            // Initialize TCP server
-            tcp_server_init();
-
-            // Initialize MQTT connection
-            mqtt_init();
-
-            // Indicate waiting for client connection
-            tcp_indicator_update(TCP_INDICATOR_WAITING); 
-        }
-    }
-#endif
-
-    // Start watchdog if not in dev mode
-    mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
+  Serial.begin(9600); 
+  RS485.setDelays(10000, 1000); // Set pre and post transmission delays to 10ms and 1ms respectively
+  
+  if (!mdb_client.begin(RS485, 9600, SERIAL_8N1)) 
+  {
+    Serial.println("Failed to start Modbus RTU Client!");
+    return;
+  }
+  else
+  {
+    Serial.println("Modbus RTU Client started successfully.");
+  }
 }   
+
+void readCoilValues(int  slave_id = 61, int start_address = 1001, int quantity = 28) 
+{
+  Serial.print("[S");
+  Serial.print(slave_id);
+  Serial.print("] ");
+
+  if (!mdb_client.requestFrom(slave_id, COILS, start_address, quantity)) {
+    Serial.println(mdb_client.lastError());
+  } else {
+    Serial.print(start_address);
+    Serial.print("-");
+    Serial.print(start_address + quantity - 1);
+    Serial.print(": ");
+    while (mdb_client.available()) {
+      Serial.print(mdb_client.read());
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+}
 
 void loop() 
 {
-#ifdef SYSTEM_H
-    // Kick watchdog periodically
-    if (millis() - kick_watchdog_timer >= WATCHDOG_FEED_INTERVAL)
-    {
-        kick_watchdog_timer = millis();
-        mbed::Watchdog::get_instance().kick();
-    }
-
-    // Check for developer mode activation
-    if (dev_mode_activated)
-    {
-        red_button_event();
-        green_button_event();
-        blue_button_event();
-        yellow_button_event();
-    }
-
-    // Always check for white button event to exit dev mode
-    white_button_event();
-#endif
-
-#ifdef ETHERNET_UTILS_H
-    if (!dev_mode_activated && !ethernet_not_linked)
-    {
-        // Update TCP server and indicator state
-        tcp_server_update() ? tcp_indicator_update(TCP_INDICATOR_CONNECTED) : tcp_indicator_update(TCP_INDICATOR_WAITING);
-
-        // Update MQTT connection
-        mqtt_update();
-
-        // Check for incoming TCP packets
-        if (receive_tcp_packet(tcp_packet))
-        {
-            // Log received packet details
-            publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Received packet - "));
-        
-            // Process and respond to the packet
-            if (return_tcp_packet(tcp_packet))
-            {
-                // Log sent packet details
-                publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("First response packet - "));
-            }
-
-            // Execute command from the packet
-            if (tcp_command_execute(tcp_packet))
-            {
-                if (return_tcp_packet(tcp_packet))
-                {
-                    // Log sent packet details
-                    publish_tcp_packet(tcp_packet, MqttMessageType::INFO, F("Second response packet - "));
-                }
-            }
-            else
-            {
-                LOG_ERROR_F(CAT_LGS, "Failed to execute TCP command: cmd=%d, row=%d, col=%d, color=%d", 
-                    tcp_packet.command, tcp_packet.row, tcp_packet.column, tcp_packet.color);
-            }
-        }
-    }
-#endif
+  for (int id = 61; id <= 68; id++) 
+  {
+    readCoilValues(id); // Read coil values from the Modbus slave device
+    delay(50);
+  }
 }
+
 
