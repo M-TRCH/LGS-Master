@@ -72,6 +72,101 @@ void hardwareReset() {
   NVIC_SystemReset();  // เรียกรีเซ็ตระบบ
 }
 
+// ================= Write Single Coil (FC05) =================
+// slaveId  : Modbus slave address (1–247)
+// coilAddr : Coil address (0-based)
+// value    : true = ON (0xFF00), false = OFF (0x0000)
+// Return   : true = success, false = timeout / CRC error / exception
+bool writeCoil(uint8_t slaveId, uint16_t coilAddr, bool value) {
+  // Build RTU frame: SlaveID + FC05 + AddrHi + AddrLo + ValHi + ValLo + CRC(2)
+  uint8_t rtu_buf[8];
+  rtu_buf[0] = slaveId;
+  rtu_buf[1] = 0x05;                     // Function Code: Write Single Coil
+  rtu_buf[2] = (coilAddr >> 8) & 0xFF;   // Coil Address High
+  rtu_buf[3] = coilAddr & 0xFF;          // Coil Address Low
+  rtu_buf[4] = value ? 0xFF : 0x00;      // Value High: 0xFF=ON, 0x00=OFF
+  rtu_buf[5] = 0x00;                     // Value Low: always 0x00
+
+  uint16_t crc = calculateCRC(rtu_buf, 6);
+  rtu_buf[6] = crc & 0xFF;
+  rtu_buf[7] = (crc >> 8) & 0xFF;
+
+  Serial.println("----------------------------------------");
+  Serial.print("[FC05] WriteCoil → SlaveID=");  Serial.print(slaveId);
+  Serial.print("  Coil=");  Serial.print(coilAddr);
+  Serial.print("  Value="); Serial.println(value ? "ON" : "OFF");
+  printHex("FC05 TX", rtu_buf, 8);
+
+  // Flush stale RX bytes ก่อนส่ง
+  int pre_flush = 0;
+  while (RS485.available() && pre_flush < RTU_BUF_SIZE) { RS485.read(); pre_flush++; }
+  if (pre_flush > 0) {
+    Serial.print("[FC05] Pre-TX flush: discarded ");
+    Serial.print(pre_flush);
+    Serial.println(" stale bytes.");
+  }
+
+  // ส่งออก RS485
+  RS485.beginTransmission();
+  RS485.write(rtu_buf, 8);
+  RS485.endTransmission();
+  RS485.receive();
+
+  // รอรับ response
+  uint8_t rx_buf[RTU_BUF_SIZE];
+  int rx_idx = 0;
+  bool receiving = false;
+  unsigned long t_start = millis();
+
+  while (true) {
+    if (RS485.available()) {
+      uint8_t b = (uint8_t)RS485.read();
+      if (rx_idx < RTU_BUF_SIZE) {
+        rx_buf[rx_idx++] = b;
+        t_start = millis();
+        receiving = true;
+      }
+    }
+    unsigned long elapsed = millis() - t_start;
+    if (!receiving && elapsed > TIMEOUT_FIRST_BYTE) {
+      Serial.println("[FC05] Timeout — no response from slave.");
+      return false;
+    }
+    if (receiving && elapsed > TIMEOUT_INTER_BYTE) break;
+  }
+
+  // ตรวจ TX echo แล้วตัดออก
+  if (rx_idx >= 8 && memcmp(rx_buf, rtu_buf, 8) == 0) {
+    int remaining = rx_idx - 8;
+    if (remaining > 0) memmove(rx_buf, rx_buf + 8, remaining);
+    rx_idx = remaining;
+  }
+
+  printHex("FC05 RX", rx_buf, rx_idx);
+
+  // FC05 response = echo ของ request (8 bytes รวม CRC)
+  if (rx_idx < 8) {
+    Serial.println("[FC05] Response too short.");
+    return false;
+  }
+
+  if (!verifyCRC(rx_buf, rx_idx)) {
+    Serial.println("[FC05] CRC FAIL — discarding.");
+    return false;
+  }
+
+  // ตรวจ Exception Response (FC = 0x85)
+  if (rx_buf[1] == 0x85) {
+    Serial.print("[FC05] Exception response, code=0x");
+    Serial.println(rx_buf[2], HEX);
+    return false;
+  }
+
+  Serial.println("[FC05] WriteCoil OK ✓");
+  Serial.println("----------------------------------------");
+  return true;
+}
+
 // ================= Setup =================
 void setup() 
 {
@@ -115,6 +210,19 @@ void setup()
   //   Serial.println(digitalRead(SW_W_PIN));
   //   delay(500);
   // }
+
+  delay(2000);
+  for (int row = 1; row <= 3; row++) 
+  {
+    for (int col = 1; col <= 4; col++) 
+    {
+      int id = (row * 10) + col;
+      writeCoil(id, 1004, true);
+      delay(200);
+      writeCoil(id, 1004, false);
+      delay(200);
+    }
+  } 
 }
 
 // ================= Loop =================
@@ -128,6 +236,45 @@ void loop()
     {
       hardwareReset();
       Serial.println("[SW] White button pressed.");
+    }
+  }
+
+  if (digitalRead(SW_R_PIN) == HIGH) 
+  {    delay(50); // debounce
+    if (digitalRead(SW_R_PIN) == HIGH) 
+    {
+      Serial.println("[SW] Red button pressed.");
+      for (int row = 1; row <= 3; row++) 
+      {
+        for (int col = 1; col <= 4; col++) 
+        {
+          int id = (row * 10) + col;
+          writeCoil(id, 1004, true);
+          delay(200);
+          writeCoil(id, 1004, false);
+          delay(200);
+        }
+      }
+    }
+  }
+
+  if (digitalRead(SW_B_PIN) == HIGH) 
+  {
+    delay(50); // debounce
+    if (digitalRead(SW_B_PIN) == HIGH) 
+    {
+      Serial.println("[SW] Blue button pressed — toggling modbus coil.");
+      for (int row = 1; row <= 3; row++) 
+      {
+        for (int col = 1; col <= 4; col++) 
+        {
+          int id = (row * 10) + col;
+          writeCoil(id, 1024, true);
+          delay(2000);
+          writeCoil(id, 1004, false);
+          delay(1000);
+        }
+      }
     }
   }
 
