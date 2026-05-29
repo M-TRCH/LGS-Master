@@ -2,9 +2,18 @@
 #include <Ethernet.h>
 #include <ArduinoRS485.h>
 
+// == =============== Hardware Configuration =================
+#define Module_Relay_PIN  D0
+#define LED_Relay_PIN     D1
+#define SW_R_PIN          A0
+#define SW_G_PIN          A1
+#define SW_B_PIN          A2
+#define SW_Y_PIN          A3
+#define SW_W_PIN          A4
+
 // ================= ตั้งค่า Network =================
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-IPAddress ip(192, 168, 0, 178);
+IPAddress ip(192, 168, 0, 178); 
 EthernetServer tcpServer(502);EthernetClient client;   // Global — คงค่าระหว่าง loop() iterations
 // ================= ค่าคงที่ =================
 #define RS485_BAUD         9600
@@ -54,14 +63,26 @@ bool verifyCRC(const uint8_t* buf, int len) {
   return calc == recv;
 }
 
+void hardwareReset() {
+  Serial.println("[SYS] Performing hardware reset...");
+  digitalWrite(Module_Relay_PIN, LOW);  // ตัดไฟ
+  digitalWrite(LED_Relay_PIN, LOW);  // ตัดไฟ
+  delay(3000);
+  Serial.println("[SYS] Reset complete.");
+  NVIC_SystemReset();  // เรียกรีเซ็ตระบบ
+}
+
 // ================= Setup =================
-void setup() {
+void setup() 
+{
   Serial.begin(9600);
   delay(500);
   Serial.println("========================================");
   Serial.println("  Transparent Modbus TCP-RTU Gateway");
   Serial.println("  Board: Arduino Opta");
   Serial.println("========================================");
+  pinMode(Module_Relay_PIN, OUTPUT);  digitalWrite(Module_Relay_PIN, HIGH);   // Enable module power 
+  pinMode(LED_Relay_PIN, OUTPUT);     digitalWrite(LED_Relay_PIN, HIGH);      // Enable LED for status indication  
 
   // 1. ตั้งค่า RS485
   Serial.println("[INIT] Configuring RS485...");
@@ -84,10 +105,32 @@ void setup() {
   Serial.println(MODBUS_TCP_PORT);
   Serial.println("[INIT] Gateway ONLINE — waiting for connections...");
   Serial.println("========================================");
+
+  // while (1)
+  // {
+  //   Serial.print(digitalRead(SW_R_PIN));
+  //   Serial.print(digitalRead(SW_G_PIN));
+  //   Serial.print(digitalRead(SW_B_PIN));
+  //   Serial.print(digitalRead(SW_Y_PIN));
+  //   Serial.println(digitalRead(SW_W_PIN));
+  //   delay(500);
+  // }
 }
 
 // ================= Loop =================
-void loop() {
+void loop() 
+{
+  // check reset button
+  if (digitalRead(SW_W_PIN) == HIGH) 
+  {
+    delay(50); // debounce
+    if (digitalRead(SW_W_PIN) == HIGH) 
+    {
+      hardwareReset();
+      Serial.println("[SW] White button pressed.");
+    }
+  }
+
   // ---- รับ connection ใหม่ (ไม่ขึ้นกับว่ามีข้อมูลหรือยัง) ----
   EthernetClient newClient = tcpServer.accept();
   if (newClient) {
