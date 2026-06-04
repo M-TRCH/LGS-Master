@@ -1,91 +1,31 @@
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
 #include <Arduino.h>
-#include "system.h"
 
-// Module type enumeration
-enum class ModuleType 
-{
-    STANDARD,   // Standard module (row 1-8)
-    NARCOTIC    // Narcotic module (row 0-9)
-};
+// ── Hardware Pins ──────────────────────────────────────────────────────────
+#define MODULE_RELAY_PIN    D0
+#define LED_RELAY_PIN       D1
+#define SW_R_PIN            A0
+#define SW_G_PIN            A1
+#define SW_B_PIN            A2
+#define SW_Y_PIN            A3
+#define SW_W_PIN            A4
 
-extern ModuleType device_type;
+// ── Serial ─────────────────────────────────────────────────────────────────
+#define SERIAL_BAUD             115200
 
-/* @brief Initialize device configuration
- * @param type Module type (STANDARD or NARCOTIC)
- * @param ip1 First octet of the IP address
- * @param ip2 Second octet of the IP address
- * @param ip3 Third octet of the IP address
- * @param ip4 Fourth octet of the IP address
- * @param day Day of the firmware version (1-31)
- * @param month Month of the firmware version (1-12)
- * @param year Year of the firmware version (e.g. 2025)
- */
-void config_init(ModuleType type, 
-                 uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4, 
-                 uint8_t day, uint8_t month, uint16_t year);
+// ── RS485 / Modbus RTU ─────────────────────────────────────────────────────
+#define RS485_BAUD              9600
+#define RS485_PRE_DELAY_US      10000   // µs – pre-TX delay
+#define RS485_POST_DELAY_US     1000    // µs – post-TX delay
+#define RTU_BUF_SIZE            256
+#define TIMEOUT_FIRST_BYTE_MS   300UL   // ms – wait for first byte from slave
+#define TIMEOUT_INTER_BYTE_MS   20UL    // ms – inter-byte frame-gap
 
-// Struct for storing IP address
-struct IPAddress_t 
-{
-    uint8_t ip1;
-    uint8_t ip2;
-    uint8_t ip3;
-    uint8_t ip4;
-};
-
-// Struct for storing firmware version
-struct FirmwareVersion_t 
-{
-    uint8_t day;    // day (1-31)
-    uint8_t month;  // month (1-12)
-    uint16_t year;  // year (e.g. 2025)
-};
-
-// Struct for storing all device information
-struct DeviceInfo_t 
-{
-    IPAddress_t ip_address;
-    FirmwareVersion_t firmware_version;
-};
-
-// Global variable to store device information
-extern DeviceInfo_t device_info;
-
-/* @brief Set the IP address of the device
- * @param info Pointer to the DeviceInfo_t structure
- * @param ip1 First octet of the IP address
- * @param ip2 Second octet of the IP address
- * @param ip3 Third octet of the IP address
- * @param ip4 Fourth octet of the IP address
- */
-void setIPAddress(DeviceInfo_t* info, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4);
-
-/*
- * @brief Set the firmware version of the device
- * @param info Pointer to the DeviceInfo_t structure
- * @param day Day of the firmware version (1-31)
- * @param month Month of the firmware version (1-12)
- * @param year Year of the firmware version (e.g. 2025)
- */
-void setFirmwareVersion(DeviceInfo_t* info, uint8_t day, uint8_t month, uint16_t year);
-
-/* @brief Convert IP address to String
- * @param ip Pointer to the IPAddress_t structure
- */
-String ipToString(const IPAddress_t* ip);
-
-/* @brief Convert firmware version to String
- * @param version Pointer to the FirmwareVersion_t structure
- */
-String firmwareVersionToString(const FirmwareVersion_t* version);
-
-/* @brief Print device information
- * @param info Pointer to the DeviceInfo_t structure
- */
-void printDeviceInfo(const DeviceInfo_t* info);
+// ── Modbus TCP ─────────────────────────────────────────────────────────────
+#define MODBUS_TCP_PORT     502
+#define TCP_BUF_SIZE        256
+#define MBAP_HEADER_LEN     6
 
 #endif // CONFIG_H
