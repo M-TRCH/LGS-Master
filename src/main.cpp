@@ -19,7 +19,7 @@ static void hardwareReset() {
 
 // ── Startup coil sweep (visual self-test) ─────────────────────────────────
 static void coilSweep() {
-    for (int row = 1; row <= 3; row++) {
+    for (int row = 1; row <= 6; row++) {
         for (int col = 1; col <= 4; col++) {
             int id = (row * 10) + col;
             writeCoil(id, 1004, true);  delay(200);
@@ -85,7 +85,7 @@ void loop() {
         delay(50);
         if (digitalRead(SW_B_PIN) == HIGH) {
             Serial.println("[SW] Blue — extended coil test.");
-            for (int row = 1; row <= 3; row++) {
+            for (int row = 1; row <= 6; row++) {
                 for (int col = 1; col <= 4; col++) {
                     int id = (row * 10) + col;
                     writeCoil(id, 1024, true);  delay(2000);
