@@ -2,48 +2,51 @@
 #include "system.h"
 
 uint32_t kick_watchdog_timer = 0;
-bool dev_mode_activated = true;
+bool local_mode_active = true;
 
 void system_init(void)
 {
     // pins configuration
-    pinMode(RELAY_1_PIN, OUTPUT);
-    pinMode(RELAY_2_PIN, OUTPUT);
-    pinMode(RELAY_3_PIN, OUTPUT);
-    pinMode(RELAY_4_PIN, OUTPUT);
-    pinMode(W_SW_PIN, INPUT_PULLUP);
-    pinMode(R_SW_PIN, INPUT_PULLUP);
-    pinMode(G_SW_PIN, INPUT_PULLUP);
-    pinMode(B_SW_PIN, INPUT_PULLUP);
-    pinMode(Y_SW_PIN, INPUT_PULLUP);
-    pinMode(LED_BUILTIN_0_PIN, OUTPUT);
-    pinMode(LED_BUILTIN_1_PIN, OUTPUT);
-    pinMode(LED_BUILTIN_2_PIN, OUTPUT);
-    pinMode(LED_BUILTIN_3_PIN, OUTPUT);
+    pinMode(ProjectConfig::Pins::RELAY_1, OUTPUT);
+    pinMode(ProjectConfig::Pins::RELAY_2, OUTPUT);
+    pinMode(ProjectConfig::Pins::RELAY_3, OUTPUT);
+    pinMode(ProjectConfig::Pins::RELAY_4, OUTPUT);
+    pinMode(ProjectConfig::Pins::SWITCH_WHITE, INPUT_PULLUP);
+    pinMode(ProjectConfig::Pins::SWITCH_RED, INPUT_PULLUP);
+    pinMode(ProjectConfig::Pins::SWITCH_GREEN, INPUT_PULLUP);
+    pinMode(ProjectConfig::Pins::SWITCH_BLUE, INPUT_PULLUP);
+    pinMode(ProjectConfig::Pins::SWITCH_YELLOW, INPUT_PULLUP);
+    pinMode(ProjectConfig::Pins::LED_0, OUTPUT);
+    pinMode(ProjectConfig::Pins::LED_1, OUTPUT);
+    pinMode(ProjectConfig::Pins::LED_2, OUTPUT);
+    pinMode(ProjectConfig::Pins::LED_3, OUTPUT);
     
     // serial configuration
-    Serial.begin(SERIAL_BAUD);
-    Serial.setTimeout(SERIAL_TIMEOUT);
+    Serial.begin(ProjectConfig::System::SERIAL_BAUD);
+    Serial.setTimeout(ProjectConfig::System::SERIAL_TIMEOUT_MS);
 
     set_relay(true);
     LOG_INFO_MSG(CAT_SYSTEM, "Waiting for Module Startup");
     uint32_t startupTime = millis();
-    while(millis() - startupTime < MODULE_STARTUP_DELAY)
+    while(millis() - startupTime < ProjectConfig::System::MODULE_STARTUP_DELAY_MS)
     {
-        // Check for developer mode activation
-        if (!digitalRead(R_SW_PIN) && !digitalRead(G_SW_PIN) && !digitalRead(B_SW_PIN) && !digitalRead(Y_SW_PIN))
+        // Holding all four colored buttons during startup switches to network mode.
+        if (!digitalRead(ProjectConfig::Pins::SWITCH_RED) &&
+            !digitalRead(ProjectConfig::Pins::SWITCH_GREEN) &&
+            !digitalRead(ProjectConfig::Pins::SWITCH_BLUE) &&
+            !digitalRead(ProjectConfig::Pins::SWITCH_YELLOW))
         {
-            dev_mode_activated = false;
+            local_mode_active = false;
         }
-        delay(100);
+        delay(ProjectConfig::System::STARTUP_MODE_POLL_INTERVAL_MS);
     }
     LOG_INFO_MSG(CAT_SYSTEM, "Module Startup Complete");
 }
 
 void set_relay(bool state)
 {
-    digitalWrite(RELAY_2_PIN, state);
-    digitalWrite(RELAY_4_PIN, state);
+    digitalWrite(ProjectConfig::Pins::RELAY_2, state);
+    digitalWrite(ProjectConfig::Pins::RELAY_4, state);
 }
 
 bool debounce_sw(uint32_t pin, uint32_t debounceTime, uint32_t releaseTimeout)
@@ -70,14 +73,14 @@ bool debounce_sw(uint32_t pin, uint32_t debounceTime, uint32_t releaseTimeout)
 void panel_switch_debug()
 {
     Serial.print("W:");
-    Serial.print(digitalRead(W_SW_PIN));
+    Serial.print(digitalRead(ProjectConfig::Pins::SWITCH_WHITE));
     Serial.print("\tR:");
-    Serial.print(digitalRead(R_SW_PIN));
+    Serial.print(digitalRead(ProjectConfig::Pins::SWITCH_RED));
     Serial.print("\tG:");
-    Serial.print(digitalRead(G_SW_PIN));
+    Serial.print(digitalRead(ProjectConfig::Pins::SWITCH_GREEN));
     Serial.print("\tB:");
-    Serial.print(digitalRead(B_SW_PIN));
+    Serial.print(digitalRead(ProjectConfig::Pins::SWITCH_BLUE));
     Serial.print("\tY:");
-    Serial.print(digitalRead(Y_SW_PIN));
+    Serial.print(digitalRead(ProjectConfig::Pins::SWITCH_YELLOW));
     Serial.println();
 }

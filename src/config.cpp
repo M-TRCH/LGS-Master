@@ -1,15 +1,23 @@
 
 #include "config.h"
+#include "logger.h"
 
 // Global variable to store device information
 DeviceInfo_t device_info;
 ModuleType device_type;
 
-void config_init(ModuleType type, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4, uint8_t day, uint8_t month, uint16_t year)
+void config_init()
 {
-    device_type = type;
-    setIPAddress(&device_info, ip1, ip2, ip3, ip4);
-    setFirmwareVersion(&device_info, day, month, year);
+    device_type = ProjectConfig::Device::MODULE_TYPE;
+    setIPAddress(&device_info,
+        ProjectConfig::Device::IP_ADDRESS.ip1,
+        ProjectConfig::Device::IP_ADDRESS.ip2,
+        ProjectConfig::Device::IP_ADDRESS.ip3,
+        ProjectConfig::Device::IP_ADDRESS.ip4);
+    setFirmwareVersion(&device_info,
+        ProjectConfig::Device::FIRMWARE_VERSION.day,
+        ProjectConfig::Device::FIRMWARE_VERSION.month,
+        ProjectConfig::Device::FIRMWARE_VERSION.year);
 
     // Print device information
     printDeviceInfo(&device_info);

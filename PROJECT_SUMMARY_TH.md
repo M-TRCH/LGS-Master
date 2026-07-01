@@ -187,17 +187,19 @@ C:\Users\mteer\.platformio\penv\Scripts\platformio.exe run -t clean
 - MQTT reconnect interval ยาวถึง 15 นาที ซึ่งอาจช้าเกินไปสำหรับงาน production
 - ไม่มี test automation ในโฟลเดอร์ `test/`
 - เอกสารบางส่วนยังไม่ครบหรือไม่ตรงกับโค้ด เช่น `LOG_MQTT_MIGRATION.md` ยังว่าง และตัวอย่างใน `LOGGING_GUIDE.md` มี enum ที่ไม่ตรงจริงบางจุด
-- developer mode / normal mode ตั้งชื่อแปรชวนสับสน: `dev_mode_activated` เริ่มต้นเป็น `true` แต่ถ้ากดปุ่มครบชุดช่วงบูตจะถูกตั้งเป็น `false` และไปเปิด network mode แทน
+- ชื่อโหมดเดิมเคยชวนสับสน แต่ปัจจุบันปรับให้สื่อความหมายเป็น `local_mode_active` ซึ่งตรงกับพฤติกรรมจริงมากกว่า
 - ใช้ credential MQTT แบบ plain text ใน source code
 
 ## 9. ข้อสังเกตเชิงนำไปใช้งานจริง
 
-1. ก่อนใช้จริงควรย้ายค่าคอนฟิกสำคัญออกจาก source code
+1. ค่าคอนฟิกหลักถูกรวมศูนย์ไว้ที่ `include/config.h` แล้ว
    - IP address
    - module type
    - MQTT broker
    - username/password
    - timeout/reconnect policy
+   - pin mapping, protocol width และค่าพารามิเตอร์ของ LGS
+   - หากต้องการเปลี่ยนพฤติกรรมระบบในภาพรวม ควรเริ่มแก้จากไฟล์นี้เป็นจุดแรก
 
 2. ถ้าจะใช้งานในระบบที่ต้องการความต่อเนื่องสูง ควรทบทวน logic MQTT reconnect
    - การรอ 15 นาทีต่อรอบอาจทำให้ monitoring ขาดช่วงนานเกินไป
@@ -218,7 +220,8 @@ C:\Users\mteer\.platformio\penv\Scripts\platformio.exe run -t clean
    - ในรีโปมีไฟล์ `LGSbus.h` แต่มี include เป็น `LGSBus.h`
 
 7. ระวังพฤติกรรม startup mode
-   - logic ปัจจุบันทำให้คนอ่านชื่อแปรอาจเข้าใจผิดว่า `dev_mode_activated = true` หมายถึงเปิด developer mode แบบตั้งใจ แต่จริง ๆ network mode จะเริ่มเมื่อค่าดังกล่าวเป็น `false`
+   - ค่า `local_mode_active = true` หมายถึงเครื่องจะตอบสนองปุ่มหน้าเครื่องและไม่เปิด network path
+   - ถ้าไม่กดปุ่มใดปุ่มหนึ่งค้างระหว่าง startup ระบบจะสลับไป network mode โดยตั้งค่าเป็น `false`
 
 ## 10. สรุปสั้น
 

@@ -5,18 +5,6 @@
 #include <PubSubClient.h>
 #include "system.h"
 
-// tcp server settings
-#define TCP_SERVER_PORT     2000        // TCP server port
-#define CLIENT_TIMEOUT_MS   120000      // timeout in ms (120 seconds)
-#define MAX_DEVICE          9999        // maximum number of devices
-
-// MQTT settings
-#define MQTT_BROKER_IP              "192.168.0.203" // Local MQTT broker IP address
-#define MQTT_BROKER_PORT            1883
-#define MQTT_USERNAME               "admin"
-#define MQTT_PASSWORD               "admin"
-#define MQTT_RECONNECT_INTERVAL_MS  (15 * 60000)  // wait 15 minutes between reconnect attempts
-
 // Struct for storing client information
 struct TcpClientInfo 
 {
@@ -75,7 +63,7 @@ struct MqttMessageType
 extern bool ethernet_not_linked;
 
 // tcp server and client instances 
-extern uint16_t transition_numbers[MAX_DEVICE]; // For tracking transition number per device
+extern uint16_t transition_numbers[ProjectConfig::Network::MAX_DEVICE_COUNT]; // For tracking transition number per device
 extern EthernetServer tcp_server;
 extern TcpClientInfo tcp_client;
 extern TcpPacket tcp_packet;

@@ -1,11 +1,39 @@
 #include "ethernet_utils.h"
 
+namespace
+{
+    IPAddress to_ip_address(const IPAddress_t& ip)
+    {
+        return IPAddress(ip.ip1, ip.ip2, ip.ip3, ip.ip4);
+    }
+
+    void print_padded_int(EthernetClient& client, int value, uint8_t width)
+    {
+        int divisor = 1;
+        for (uint8_t index = 1; index < width; ++index)
+        {
+            divisor *= 10;
+        }
+
+        for (uint8_t index = 1; index < width; ++index)
+        {
+            if (value < divisor)
+            {
+                client.print('0');
+            }
+            divisor /= 10;
+        }
+
+        client.print(value);
+    }
+}
+
 // Ethernet connection status
 bool ethernet_not_linked = false; // Track Ethernet link status
 
 // tcp server and client instances
-uint16_t transition_numbers[MAX_DEVICE] = {0}; // Track transition number for each device
-EthernetServer tcp_server(TCP_SERVER_PORT);
+uint16_t transition_numbers[ProjectConfig::Network::MAX_DEVICE_COUNT] = {0}; // Track transition number for each device
+EthernetServer tcp_server(ProjectConfig::Network::TCP_SERVER_PORT);
 TcpClientInfo tcp_client = {EthernetClient(), "", 0, false};
 TcpPacket tcp_packet = {0,0,0,0,0,0,0,0,0,0};
 
@@ -28,9 +56,9 @@ void ethernet_init()
     int ip3 = device_info.ip_address.ip3;
     int ip4 = device_info.ip_address.ip4;
     IPAddress ip(ip1, ip2, ip3, ip4);
-    IPAddress gateway(ip1, ip2, ip3, 1);
-    IPAddress subnet(255, 255, 255, 0);
-    IPAddress dns(8, 8, 8, 8);
+    IPAddress gateway = to_ip_address(ProjectConfig::Network::GATEWAY);
+    IPAddress subnet = to_ip_address(ProjectConfig::Network::SUBNET);
+    IPAddress dns = to_ip_address(ProjectConfig::Network::DNS);
     
     // Initialize with static IP configuration
     Ethernet.begin(ip, dns, gateway, subnet);
@@ -38,8 +66,8 @@ void ethernet_init()
     // Generate MQTT client ID and topic based on IP address
     String ip_dot_str = String(ip1) + "." + String(ip2) + "." + String(ip3) + "." + String(ip4);
     String ip_str = String(ip1) + String(ip2) + String(ip3) + String(ip4);
-    mqtt_client_id = "lgs" + ip_str;            // e.g. "lgs192168099"
-    mqtt_topic = "lgs/" + ip_str + "/opta";     // e.g. "lgs/192168099/opta"
+    mqtt_client_id = String(ProjectConfig::Network::MQTT_CLIENT_PREFIX) + ip_str;            // e.g. "lgs192168099"
+    mqtt_topic = String(ProjectConfig::Network::MQTT_TOPIC_PREFIX) + ip_str + ProjectConfig::Network::MQTT_TOPIC_SUFFIX;     // e.g. "lgs/192168099/opta"
     mqtt_device_id = ip_dot_str;                // e.g. "192.168.0.99"
 
     // Log IP address
@@ -71,7 +99,7 @@ void tcp_server_init()
 {
     // Start the TCP server
     tcp_server.begin();
-    LOG_INFO_F(CAT_TCP, "TCP server initialized on port %d", TCP_SERVER_PORT);
+    LOG_INFO_F(CAT_TCP, "TCP server initialized on port %d", ProjectConfig::Network::TCP_SERVER_PORT);
 }
 
 bool tcp_server_update()
@@ -103,7 +131,7 @@ bool tcp_server_update()
             client_connected = false;
         }
         // If client is connected but inactive for too long, disconnect
-        else if (millis() - tcp_client.last_active_time > CLIENT_TIMEOUT_MS) 
+        else if (millis() - tcp_client.last_active_time > ProjectConfig::Network::CLIENT_TIMEOUT_MS) 
         {
             tcp_client.client.stop();
             tcp_client.connected = false;
@@ -133,15 +161,15 @@ int receive_tcp_packet(TcpPacket &packet)
         return 0;
         
     // Wait for header 'B'
-    if (!tcp_client.client.find('B'))
+    if (!tcp_client.client.find(ProjectConfig::Protocol::PACKET_HEADER))
         return 0;
 
     // Parse and validate all fields
-    int fields[10];
-    for (int i = 0; i < 10; ++i) 
+    int fields[ProjectConfig::Protocol::PACKET_FIELD_COUNT];
+    for (int index = 0; index < ProjectConfig::Protocol::PACKET_FIELD_COUNT; ++index) 
     {
         if (!tcp_client.client.available()) return 0; // Ensure data is available
-        fields[i] = tcp_client.client.parseInt();
+        fields[index] = tcp_client.client.parseInt();
     }
 
     // Assign to struct
@@ -157,7 +185,7 @@ int receive_tcp_packet(TcpPacket &packet)
     packet.sum          = fields[9];
 
     // Check device index range to prevent overflow
-    if (packet.device < 0 || packet.device >= MAX_DEVICE) 
+    if (packet.device < 0 || packet.device >= static_cast<int>(ProjectConfig::Network::MAX_DEVICE_COUNT)) 
     {
         LOG_ERROR_MSG(CAT_TCP, "Device index out of range");
         return 0;
@@ -166,7 +194,7 @@ int receive_tcp_packet(TcpPacket &packet)
     // Validate sum and transition number (allow reply only if transition number changed)
     int calc_sum = packet.cabinet + packet.row + packet.column + packet.quantity + packet.color +
                    packet.command + packet.ret_status + packet.transition + packet.device;
-    calc_sum = calc_sum % 100;  // Sum is last two digits
+    calc_sum = calc_sum % ProjectConfig::Protocol::CHECKSUM_MODULO;
     if (packet.sum != calc_sum) 
     {
         LOG_ERROR_F(CAT_TCP, "Packet checksum mismatch - received: %d, calculated: %d", packet.sum, calc_sum);
@@ -203,15 +231,15 @@ int return_tcp_packet(TcpPacket& packet)
     }
 
     // Check field size limits
-    if (packet.cabinet < 0 || packet.cabinet > 99 ||
-        packet.row < 0 || packet.row > 99 ||
-        packet.column < 0 || packet.column > 99 ||
-        packet.quantity < 0 || packet.quantity > 9999 ||
-        packet.color < 0 || packet.color > 99 ||
-        packet.command < 0 || packet.command > 99 ||
-        packet.ret_status < 0 || packet.ret_status > 99 ||
-        packet.transition < 0 || packet.transition > 99 ||
-        packet.device < 0 || packet.device > 9998) 
+    if (packet.cabinet < 0 || packet.cabinet > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.row < 0 || packet.row > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.column < 0 || packet.column > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.quantity < 0 || packet.quantity > ProjectConfig::Protocol::MAX_FOUR_DIGIT_VALUE ||
+        packet.color < 0 || packet.color > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.command < 0 || packet.command > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.ret_status < 0 || packet.ret_status > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.transition < 0 || packet.transition > ProjectConfig::Protocol::MAX_TWO_DIGIT_VALUE ||
+        packet.device < 0 || packet.device > ProjectConfig::Protocol::MAX_DEVICE_ID) 
     {
         LOG_ERROR_MSG(CAT_TCP, "Packet field values out of range");
         return 0;
@@ -220,52 +248,38 @@ int return_tcp_packet(TcpPacket& packet)
     // Calculate summary (checksum)
     packet.sum = packet.cabinet + packet.row + packet.column + packet.quantity + packet.color +
                    packet.command + packet.ret_status + packet.transition + packet.device;
-    packet.sum = packet.sum % 100;  // Sum is last two digits
+    packet.sum = packet.sum % ProjectConfig::Protocol::CHECKSUM_MODULO;
 
     // Send packet
-    tcp_client.client.print("B");
-    if (packet.cabinet < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.cabinet);
+    tcp_client.client.print(ProjectConfig::Protocol::PACKET_HEADER);
+    print_padded_int(tcp_client.client, packet.cabinet, ProjectConfig::Protocol::CABINET_WIDTH);
 
     tcp_client.client.print("R");
-    if (packet.row < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.row);
+    print_padded_int(tcp_client.client, packet.row, ProjectConfig::Protocol::ROW_WIDTH);
 
     tcp_client.client.print("C");
-    if (packet.column < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.column);
+    print_padded_int(tcp_client.client, packet.column, ProjectConfig::Protocol::COLUMN_WIDTH);
 
     tcp_client.client.print("Q");
-    if (packet.quantity < 1000) tcp_client.client.print("0");
-    if (packet.quantity < 100) tcp_client.client.print("0");
-    if (packet.quantity < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.quantity);
+    print_padded_int(tcp_client.client, packet.quantity, ProjectConfig::Protocol::QUANTITY_WIDTH);
 
     tcp_client.client.print("L");
-    if (packet.color < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.color);
+    print_padded_int(tcp_client.client, packet.color, ProjectConfig::Protocol::COLOR_WIDTH);
 
     tcp_client.client.print("M");
-    if (packet.command < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.command);
+    print_padded_int(tcp_client.client, packet.command, ProjectConfig::Protocol::COMMAND_WIDTH);
 
     tcp_client.client.print("T");
-    if (packet.ret_status < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.ret_status);
+    print_padded_int(tcp_client.client, packet.ret_status, ProjectConfig::Protocol::STATUS_WIDTH);
 
     tcp_client.client.print("N");
-    if (packet.transition < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.transition);
+    print_padded_int(tcp_client.client, packet.transition, ProjectConfig::Protocol::TRANSITION_WIDTH);
 
     tcp_client.client.print("D");
-    if (packet.device < 1000) tcp_client.client.print("0");
-    if (packet.device < 100) tcp_client.client.print("0");
-    if (packet.device < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.device);
+    print_padded_int(tcp_client.client, packet.device, ProjectConfig::Protocol::DEVICE_WIDTH);
 
     tcp_client.client.print("S");
-    if (packet.sum < 10) tcp_client.client.print("0");
-    tcp_client.client.print(packet.sum);
+    print_padded_int(tcp_client.client, packet.sum, ProjectConfig::Protocol::CHECKSUM_WIDTH);
 
     tcp_client.client.println();
 
@@ -279,8 +293,8 @@ int return_tcp_packet(TcpPacket& packet)
 
 bool mqtt_init()
 {
-    mqtt_client.setServer(MQTT_BROKER_IP, MQTT_BROKER_PORT);
-    if (mqtt_client.connect(mqtt_client_id.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) 
+    mqtt_client.setServer(ProjectConfig::Network::MQTT_BROKER_IP, ProjectConfig::Network::MQTT_BROKER_PORT);
+    if (mqtt_client.connect(mqtt_client_id.c_str(), ProjectConfig::Network::MQTT_USERNAME, ProjectConfig::Network::MQTT_PASSWORD)) 
     {
         mqtt_info.connected = true;
         mqtt_info.last_error = "";
@@ -303,12 +317,12 @@ void mqtt_update()
         uint32_t current_time = millis();
         
         // Check if enough time has passed since last reconnect attempt
-        if (current_time - mqtt_info.last_reconnect_attempt >= MQTT_RECONNECT_INTERVAL_MS)
+        if (current_time - mqtt_info.last_reconnect_attempt >= ProjectConfig::Network::MQTT_RECONNECT_INTERVAL_MS)
         {
             LOG_WARN_MSG(CAT_MQTT, "Disconnected, attempting reconnect");
             mqtt_info.last_reconnect_attempt = current_time;
 
-            if (mqtt_client.connect(mqtt_client_id.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) 
+            if (mqtt_client.connect(mqtt_client_id.c_str(), ProjectConfig::Network::MQTT_USERNAME, ProjectConfig::Network::MQTT_PASSWORD)) 
             {
                 mqtt_info.connected = true;
                 mqtt_info.last_error = "";

@@ -5,10 +5,8 @@
 void setup() 
 {
 #ifdef CONFIG_H
-    // Initialize configuration with module type, IP address, and firmware version
-    config_init(ModuleType::STANDARD, 
-        192, 168, 0, 99, 
-        11, 9, 2025);
+    // Initialize centralized project configuration.
+    config_init();
 #endif
 
 #ifdef LOGGER_H
@@ -28,7 +26,7 @@ void setup()
 #endif
 
 #ifdef ETHERNET_UTILS_H
-    if (!dev_mode_activated)
+    if (!local_mode_active)
     {   
         // Set TCP indicator to idle initially
         tcp_indicator_update(TCP_INDICATOR_IDLE);
@@ -55,22 +53,22 @@ void setup()
     }
 #endif
 
-    // Start watchdog if not in dev mode
-    mbed::Watchdog::get_instance().start(WATCHDOG_TIMEOUT);
+    // Start watchdog regardless of local or network mode.
+    mbed::Watchdog::get_instance().start(ProjectConfig::System::WATCHDOG_TIMEOUT_MS);
 }   
 
 void loop() 
 {
 #ifdef SYSTEM_H
     // Kick watchdog periodically
-    if (millis() - kick_watchdog_timer >= WATCHDOG_FEED_INTERVAL)
+    if (millis() - kick_watchdog_timer >= ProjectConfig::System::WATCHDOG_FEED_INTERVAL_MS)
     {
         kick_watchdog_timer = millis();
         mbed::Watchdog::get_instance().kick();
     }
 
-    // Check for developer mode activation
-    if (dev_mode_activated)
+    // In local mode, colored buttons run direct panel/module actions.
+    if (local_mode_active)
     {
         red_button_event();
         green_button_event();
@@ -78,12 +76,12 @@ void loop()
         yellow_button_event();
     }
 
-    // Always check for white button event to exit dev mode
+    // Always check for white button event to allow reset.
     white_button_event();
 #endif
 
 #ifdef ETHERNET_UTILS_H
-    if (!dev_mode_activated && !ethernet_not_linked)
+    if (!local_mode_active && !ethernet_not_linked)
     {
         // Update TCP server and indicator state
         tcp_server_update() ? tcp_indicator_update(TCP_INDICATOR_CONNECTED) : tcp_indicator_update(TCP_INDICATOR_WAITING);

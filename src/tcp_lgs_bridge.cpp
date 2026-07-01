@@ -33,35 +33,36 @@ bool tcp_command_execute(const TcpPacket packet)
     if (device_type == ModuleType::STANDARD)
     {
         // Validate row and column
-        if (packet.row < 1 || packet.row > 8 || packet.column < 1 || packet.column > 8)
+        if (packet.row < ProjectConfig::Lgs::STANDARD_MIN_ROW || packet.row > ProjectConfig::Lgs::STANDARD_MAX_ROW ||
+            packet.column < ProjectConfig::Lgs::STANDARD_MIN_COLUMN || packet.column > ProjectConfig::Lgs::STANDARD_MAX_COLUMN)
         {
             LOG_ERROR_F(CAT_LGS, "Invalid row/column for standard module: row=%d, col=%d", packet.row, packet.column);
             return false; // Invalid row/column for standard module
         }
 
         // Validate color
-        if (packet.color < 1 || packet.color > 4)
+        if (packet.color < ProjectConfig::Lgs::STANDARD_MIN_COLOR || packet.color > ProjectConfig::Lgs::STANDARD_MAX_COLOR)
         {
             LOG_ERROR_F(CAT_LGS, "Invalid color for standard module: color=%d", packet.color);
             return false; // Invalid color
         }
 
         // Convert to LGS addressing (row 1-8 to 8-1)
-        ModuleAddress addr(9 - packet.row, packet.column);
+        ModuleAddress addr(ProjectConfig::Protocol::STANDARD_ROW_OFFSET - packet.row, packet.column);
         
         // Determine color
         ModuleColor color;
-        if (packet.color == 1)         color = cl_red;
-        else if (packet.color == 2)    color = cl_green;
-        else if (packet.color == 3)    color = cl_blue;
-        else if (packet.color == 4)    color = cl_yellow;
+        if (packet.color == ProjectConfig::Protocol::COLOR_RED)         color = cl_red;
+        else if (packet.color == ProjectConfig::Protocol::COLOR_GREEN)  color = cl_green;
+        else if (packet.color == ProjectConfig::Protocol::COLOR_BLUE)   color = cl_blue;
+        else if (packet.color == ProjectConfig::Protocol::COLOR_YELLOW) color = cl_yellow;
         
         // Execute command
         switch (packet.command)
         {
             case CMD_ON:
             {
-                if (set_color(ModuleType::STANDARD, addr, color, 1.0, true))
+                if (set_color(ModuleType::STANDARD, addr, color, ProjectConfig::Lgs::STANDARD_BRIGHTNESS, true))
                 {
                     tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
                     LOG_INFO_F(CAT_LGS, "'ON' executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
@@ -75,7 +76,7 @@ bool tcp_command_execute(const TcpPacket packet)
             }
             case CMD_OFF:
             {
-                if (set_color(ModuleType::STANDARD, addr, color, 1.0, false))
+                if (set_color(ModuleType::STANDARD, addr, color, ProjectConfig::Lgs::STANDARD_BRIGHTNESS, false))
                 {
                     tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
                     LOG_INFO_F(CAT_LGS, "'OFF' executed at [%d, %d] with color %d", packet.row, packet.column, packet.color);
@@ -124,21 +125,22 @@ bool tcp_command_execute(const TcpPacket packet)
     else if (device_type == ModuleType::NARCOTIC)
     {
         // Validate row and column
-        if (packet.row < 0 || packet.row > 9 || packet.column < 1 || packet.column > 8)
+        if (packet.row < ProjectConfig::Lgs::NARCOTIC_MIN_ROW || packet.row > ProjectConfig::Lgs::NARCOTIC_MAX_ROW ||
+            packet.column < ProjectConfig::Lgs::NARCOTIC_MIN_COLUMN || packet.column > ProjectConfig::Lgs::NARCOTIC_MAX_COLUMN)
         {
             LOG_ERROR_F(CAT_LGS, "Invalid row/column for narcotic module: row=%d, col=%d", packet.row, packet.column);
             return false; // Invalid row/column for narcotic module
         }
 
         // Validate color
-        if (packet.color != 1)
+        if (packet.color != ProjectConfig::Lgs::NARCOTIC_REQUIRED_COLOR)
         {
             LOG_ERROR_F(CAT_LGS, "Invalid color for narcotic module: color=%d", packet.color);
             return false; // Invalid color
         }
 
         // convert to LGS addressing (row 1-10 to 9-0)
-        ModuleAddress addr(10 - packet.row, packet.column);
+        ModuleAddress addr(ProjectConfig::Protocol::NARCOTIC_ROW_OFFSET - packet.row, packet.column);
 
         // Determine color (only red supported)
         ModuleColor color = cl_red;
@@ -148,7 +150,7 @@ bool tcp_command_execute(const TcpPacket packet)
         {
             case CMD_ON:
             {
-                if (set_color(ModuleType::NARCOTIC, addr, color, 0.8, true, packet.quantity))
+                if (set_color(ModuleType::NARCOTIC, addr, color, ProjectConfig::Lgs::NARCOTIC_ON_BRIGHTNESS, true, packet.quantity))
                 {
                     tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;    
                     LOG_INFO_F(CAT_LGS, "'ON' executed at [%d, %d] with quantity %d", packet.row, packet.column, packet.quantity);
@@ -163,7 +165,7 @@ bool tcp_command_execute(const TcpPacket packet)
             case CMD_OFF:
             {
                 ModuleStatus_t status = ModuleStatus_t::MODULE_UNKNOWN;
-                if (set_color(ModuleType::NARCOTIC, addr, color, 0.0, false, 0, status))
+                if (set_color(ModuleType::NARCOTIC, addr, color, ProjectConfig::Lgs::OFF_BRIGHTNESS, false, 0, status))
                 {
                     if (status == ModuleStatus_t::MODULE_IDLE)
                         tcp_packet.ret_status = PacketStatus::SECOND_SUCCEED;   // Successfully turned off

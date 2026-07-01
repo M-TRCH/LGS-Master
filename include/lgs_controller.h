@@ -51,7 +51,7 @@ struct ModuleAddress
     int get_id() const 
     {
         if (id != -1) return id;
-        if (row != -1 && col != -1) return row * 10 + col;
+        if (row != -1 && col != -1) return row * ProjectConfig::Protocol::MODULE_ID_MULTIPLIER + col;
         return -1; // Invalid address
     }
 };
