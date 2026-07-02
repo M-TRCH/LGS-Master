@@ -293,6 +293,13 @@ int return_tcp_packet(TcpPacket& packet)
 
 bool mqtt_init()
 {
+    if (!ProjectConfig::Network::MQTT_ENABLED)
+    {
+        mqtt_info.connected = false;
+        mqtt_info.last_error = "";
+        return false;
+    }
+
     mqtt_client.setServer(ProjectConfig::Network::MQTT_BROKER_IP, ProjectConfig::Network::MQTT_BROKER_PORT);
     if (mqtt_client.connect(mqtt_client_id.c_str(), ProjectConfig::Network::MQTT_USERNAME, ProjectConfig::Network::MQTT_PASSWORD)) 
     {
@@ -312,6 +319,12 @@ bool mqtt_init()
 
 void mqtt_update()
 {
+    if (!ProjectConfig::Network::MQTT_ENABLED)
+    {
+        mqtt_info.connected = false;
+        return;
+    }
+
     if (!mqtt_client.connected()) 
     {
         uint32_t current_time = millis();
@@ -350,6 +363,11 @@ void mqtt_update()
 
 bool mqtt_publish_json(const char* level, const String& message, const char* topic)
 {
+    if (!ProjectConfig::Network::MQTT_ENABLED)
+    {
+        return false;
+    }
+
     if (!mqtt_info.connected) 
     {
         LOG_ERROR_MSG(CAT_MQTT, "Cannot publish - not connected to broker");

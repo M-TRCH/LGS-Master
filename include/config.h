@@ -47,8 +47,8 @@ namespace ProjectConfig
     namespace Device
     {
         static constexpr ModuleType MODULE_TYPE = ModuleType::STANDARD;
-        static constexpr IPAddress_t IP_ADDRESS = {192, 168, 0, 99};
-        static constexpr FirmwareVersion_t FIRMWARE_VERSION = {11, 9, 2025};
+        static constexpr IPAddress_t IP_ADDRESS = {192, 168, 0, 12};
+        static constexpr FirmwareVersion_t FIRMWARE_VERSION = {2, 7, 2026};
     }
 
     namespace Pins
@@ -90,7 +90,8 @@ namespace ProjectConfig
         static constexpr IPAddress_t GATEWAY = {192, 168, 0, 1};
         static constexpr IPAddress_t SUBNET = {255, 255, 255, 0};
         static constexpr IPAddress_t DNS = {8, 8, 8, 8};
-        static constexpr const char* MQTT_BROKER_IP = "192.168.0.203";
+        static constexpr bool MQTT_ENABLED = false;
+        static constexpr const char* MQTT_BROKER_IP = "192.168.0.60";
         static constexpr uint16_t MQTT_BROKER_PORT = 1883;
         static constexpr const char* MQTT_USERNAME = "admin";
         static constexpr const char* MQTT_PASSWORD = "admin";

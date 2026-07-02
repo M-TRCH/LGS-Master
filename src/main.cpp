@@ -45,7 +45,10 @@ void setup()
             tcp_server_init();
 
             // Initialize MQTT connection
-            mqtt_init();
+            if (ProjectConfig::Network::MQTT_ENABLED)
+            {
+                mqtt_init();
+            }
 
             // Indicate waiting for client connection
             tcp_indicator_update(TCP_INDICATOR_WAITING); 
@@ -87,7 +90,10 @@ void loop()
         tcp_server_update() ? tcp_indicator_update(TCP_INDICATOR_CONNECTED) : tcp_indicator_update(TCP_INDICATOR_WAITING);
 
         // Update MQTT connection
-        mqtt_update();
+        if (ProjectConfig::Network::MQTT_ENABLED)
+        {
+            mqtt_update();
+        }
 
         // Check for incoming TCP packets
         if (receive_tcp_packet(tcp_packet))
