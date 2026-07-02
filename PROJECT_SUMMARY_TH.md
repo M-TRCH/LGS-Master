@@ -223,6 +223,99 @@ C:\Users\mteer\.platformio\penv\Scripts\platformio.exe run -t clean
    - ค่า `local_mode_active = true` หมายถึงเครื่องจะตอบสนองปุ่มหน้าเครื่องและไม่เปิด network path
    - ถ้าไม่กดปุ่มใดปุ่มหนึ่งค้างระหว่าง startup ระบบจะสลับไป network mode โดยตั้งค่าเป็น `false`
 
-## 10. สรุปสั้น
+## 10. บทวิเคราะห์ปัญหา reconnect หลัง idle
+
+อาการที่ตรวจพบ:
+
+- client เชื่อมต่อครั้งแรก ส่งคำสั่งเสร็จ แล้วตัดการเชื่อมต่อเอง
+- ถ้า reconnect ทันทีหรือในช่วงเวลาสั้น ๆ จะเชื่อมต่อได้ตามปกติ
+- แต่ถ้าปล่อยทิ้งช่วงประมาณ 5 นาที attempt แรกหลังกลับมาอาจยังไม่เชื่อมต่อ
+- ที่ panel ของ module ID `99` จะแสดงสีเหลือง `waiting` ใน attempt ที่ยังไม่สำเร็จ
+- เมื่อ client ลองเชื่อมต่ออีกครั้งติด ๆ กัน สถานะจะเปลี่ยนเป็นสีเขียว `connected`
+
+หลักฐานจากโค้ด:
+
+- ไฟสถานะ TCP ถูกตัดสินจากผลลัพธ์ของ `tcp_server_update()` ใน `src/main.cpp`
+- ถ้า `tcp_server_update()` คืนค่า `false` ระบบจะขึ้น `waiting`
+- ถ้าฟังก์ชันเดียวกันคืนค่า `true` ระบบจะขึ้น `connected`
+- ดังนั้นกรณีที่ไฟยังเหลือง แปลว่าฝั่ง firmware ยังไม่ได้ถือว่ามี active client ในรอบนั้น
+
+ข้อสรุปเชิงวิเคราะห์:
+
+1. ปัญหานี้ไม่ได้ชี้ไปที่การ parse packet หรือ `transition` duplicate เป็น root cause หลัก
+   - ถ้า TCP connect สำเร็จแล้วแต่ packet ถูก reject สีสถานะควรยังเป็นเขียว
+   - แต่อาการจริงคือใน attempt ที่มีปัญหาไฟยังคงเป็นเหลือง
+
+2. ฝั่ง firmware มี defect ที่ควรแก้อยู่จริงในลอจิกจัดการ client
+   - ใน `src/ethernet_utils.cpp` โค้ดเรียก `tcp_server.accept()` ก่อน
+   - จากนั้นจึงค่อยตรวจว่า client เก่าหลุดหรือ timeout แล้วหรือยัง
+   - ลำดับนี้เปิดโอกาสให้ attempt แรกของการ reconnect ถูกพลาดได้หนึ่งรอบ ถ้า slot เดิมยังไม่ถูกเคลียร์
+
+3. อย่างไรก็ตาม threshold ที่สัมพันธ์กับเวลา `ประมาณ 5 นาที` ไม่ได้ถูกสร้างจาก application logic ของ firmware โดยตรง
+   - ค่า timeout ฝั่ง firmware สำหรับ client ปัจจุบันคือ `120000 ms` หรือ `2 นาที`
+   - ในโค้ดไม่มี timer `5 นาที` สำหรับ TCP reconnect
+   - จึงมีน้ำหนักว่าปัญหาอาจเกิดจาก interaction ระหว่าง client behavior กับ network/socket state ระดับต่ำกว่า application
+
+4. พฤติกรรมของ client ที่ `connect -> send command -> disconnect ทันที` เป็นตัวกระตุ้นปัญหาได้
+   - เพราะฝั่ง firmware รับรู้การหลุดของ client ด้วยการ polling ใน loop
+   - ถ้า client ปิดการเชื่อมต่อเร็วมาก สถานะเดิมอาจค้างอยู่ชั่วคราวก่อนจะถูกเคลียร์
+   - พฤติกรรมนี้อธิบายได้ว่าทำไม attempt ถัดไปแบบติด ๆ กันจึงมีโอกาสสำเร็จหลัง state เดิมถูกเก็บกวาดแล้ว
+
+ข้อสรุปสุดท้ายสำหรับ incident นี้:
+
+- firmware มีส่วนเสี่ยงจากลอจิก stale client state และควรแก้
+- แต่จากหลักฐานที่มี ยังไม่พอจะยืนยันว่า firmware application เป็นตัวสร้างเงื่อนไข `5 นาที` ด้วยตัวเอง
+- root cause ที่เป็นไปได้มากที่สุดคือการซ้อนกันของ
+  - defect ในลอจิก accept/cleanup ฝั่ง firmware
+  - รูปแบบการ disconnect ของ client
+  - และ network/socket state หลัง idle ระยะหนึ่ง
+
+## 11. แนวทางแก้ปัญหาที่เสนอ
+
+### ระยะสั้น
+
+1. ปรับพฤติกรรม client
+   - หลังรับ response แล้วให้ค้าง connection ต่ออีกช่วงสั้น ๆ เช่น `1-3 วินาที` ก่อน disconnect
+   - หรือเปลี่ยนเป็น reuse connection เดิมแทนการ connect/disconnect ทุกคำสั่ง
+
+2. เก็บ log เพื่อแยกสาเหตุให้ชัด
+   - ดู Serial log ว่า attempt ที่ล้มเหลวมีข้อความ `Client connected:` หรือไม่
+   - ถ้าไม่มี แปลว่า connection ยังไม่ถึงชั้น application ของ firmware
+   - ถ้ามี แต่ยังทำงานต่อไม่ได้ ให้ไล่ต่อที่ packet handling และ client behavior
+
+### ระยะกลาง
+
+1. แก้ลอจิก `tcp_server_update()`
+   - ตรวจและเคลียร์ client เก่าก่อน `accept()` client ใหม่
+   - ลดโอกาสพลาด reconnect attempt แรกจาก stale slot
+
+2. เพิ่ม logging สำหรับ state transition ของ TCP
+   - log ตอนพบว่า client เก่าหลุด
+   - log ตอน timeout
+   - log ตอนรับ client ใหม่
+   - log เหตุผลที่ไม่รับ client ใหม่ในรอบนั้น
+
+3. พิจารณา reset state ที่ค้างหลัง disconnect
+   - เช่นข้อมูล client metadata และตัวแปรที่เกี่ยวข้องกับ session ปัจจุบัน
+
+### ระยะยาว
+
+1. ออกแบบ reconnect policy ให้ชัดทั้งสองฝั่ง
+   - ฝั่ง client ควรกำหนด retry interval, connect timeout และ post-response delay
+   - ฝั่ง firmware ควรกำหนด session cleanup policy ให้ชัดเจนและสม่ำเสมอ
+
+2. เพิ่ม test scenario สำหรับ TCP lifecycle
+   - connect -> command -> disconnect
+   - reconnect ทันที
+   - reconnect หลัง idle 2 นาที
+   - reconnect หลัง idle 5 นาที
+   - reconnect ซ้ำหลายครั้งติดกัน
+
+3. ถ้ายังพบปัญหาเดิมหลังแก้ลอจิก firmware แล้ว
+   - ควรตรวจต่อที่ ARP aging, TCP half-close behavior, และ library behavior ของ Ethernet stack บน Opta
+
+## 12. สรุปสั้น
 
 โปรเจคนี้เหมาะกับงานควบคุม LGS ผ่าน TCP บนฮาร์ดแวร์เฉพาะ โดยมีจุดแข็งที่ flow การทำงานตรงไปตรงมา, แยกโมดูลชัด, และมี watchdog กับ logging รองรับ แต่ถ้าจะนำไปใช้งานจริงในระบบที่ต้องดูแลง่ายและขยายต่อได้ ควรเร่งจัดการเรื่อง configuration management, security ของ MQTT, test coverage และความชัดเจนของ operational mode เป็นลำดับแรก
+
+สำหรับ incident เรื่อง reconnect หลัง idle ข้อสรุปปัจจุบันคือ firmware มีจุดที่ควรแก้ในลอจิกการจัดการ TCP client อย่างชัดเจน แต่สาเหตุเชิงเวลา `5 นาที` ยังชี้ว่าต้องพิจารณาพฤติกรรมฝั่ง client และ network stack ร่วมด้วย ไม่ควรสรุปว่าเป็นความผิดของ application firmware เพียงด้านเดียว
